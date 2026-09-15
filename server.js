@@ -88,16 +88,13 @@ function getLocalNetworkIP() {
   return null;
 }
 
-// Only start the listener in local dev — Vercel handles this itself
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, HOST, () => {
-    const lanIP = getLocalNetworkIP();
-    console.log(`Student OS is running:`);
-    console.log(`  On this PC:        http://localhost:${PORT}`);
-    if (lanIP) {
-      console.log(`  From your phone:   http://${lanIP}:${PORT}  (same Wi-Fi network)`);
-    }
-  });
-}
+app.listen(PORT, HOST, () => {
+  const lanIP = getLocalNetworkIP();
+  console.log(`Student OS is running:`);
+  console.log(`  On this PC:        http://localhost:${PORT}`);
+  if (lanIP) {
+    console.log(`  From your phone:   http://${lanIP}:${PORT}  (same Wi-Fi network)`);
+  }
+});
 
 module.exports = app;
