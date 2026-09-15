@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login | <%= siteName %></title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--color-bg,#f4f6fb); }
+    .login-card { background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.10); padding:2.5rem 2rem; width:100%; max-width:380px; }
+    .login-brand { text-align:center; margin-bottom:1.5rem; }
+    .login-brand .brand-mark { font-size:2rem; font-weight:800; background:var(--color-primary,#4f46e5); color:#fff; border-radius:8px; padding:.2rem .6rem; }
+    .login-brand h2 { margin:.5rem 0 0; font-size:1.1rem; color:#555; font-weight:500; }
+    .form-group { margin-bottom:1rem; }
+    .form-group label { display:block; font-size:.85rem; font-weight:600; margin-bottom:.3rem; color:#333; }
+    .form-group input { width:100%; padding:.6rem .85rem; border:1px solid #d1d5db; border-radius:7px; font-size:.95rem; box-sizing:border-box; }
+    .form-group input:focus { outline:none; border-color:var(--color-primary,#4f46e5); box-shadow:0 0 0 2px rgba(79,70,229,.15); }
+    .btn-login { width:100%; padding:.7rem; background:var(--color-primary,#4f46e5); color:#fff; border:none; border-radius:7px; font-size:1rem; font-weight:600; cursor:pointer; margin-top:.5rem; }
+    .btn-login:hover { opacity:.9; }
+    .alert-error   { background:#fef2f2; border:1px solid #fca5a5; color:#b91c1c; border-radius:7px; padding:.7rem 1rem; margin-bottom:1rem; font-size:.9rem; }
+    .alert-success { background:#f0fdf4; border:1px solid #86efac; color:#166534; border-radius:7px; padding:.7rem 1rem; margin-bottom:1rem; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="brand-mark">SOS</span>
+      <h2>Admin Panel Login</h2>
+    </div>
+
+    <% if (error) { %>
+      <div class="alert-error"><%= error %></div>
+    <% } %>
+    <% if (success) { %>
+      <div class="alert-success"><%= success %></div>
+    <% } %>
+
+    <form method="POST" action="/admin/login" autocomplete="off">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required autofocus autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn-login">Sign in</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -50,6 +50,9 @@
 
       <div class="admin-sidebar-footer">
         <a href="/">&larr; Back to site</a>
+        <form method="POST" action="/admin/logout" style="margin:.5rem 0 0;">
+          <button type="submit" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:.85rem;padding:0;text-decoration:underline;">Sign out</button>
+        </form>
       </div>
     </aside>
 
@@ -63,8 +66,15 @@
           </div>
         </div>
         <div class="admin-user">
-          <div class="admin-avatar">A</div>
-          <span>Admin</span>
+          <div class="admin-avatar"><%= (adminUser && adminUser.displayName) ? adminUser.displayName[0].toUpperCase() : 'A' %></div>
+          <span><%= (adminUser && adminUser.displayName) ? adminUser.displayName : 'Admin' %>
+            <% if (adminUser && adminUser.role) { %>
+              <small style="display:block;font-size:.7rem;color:#aaa;text-transform:capitalize;"><%= adminUser.role %></small>
+            <% } %>
+          </span>
+          <form method="POST" action="/admin/logout" style="margin:0;">
+            <button type="submit" title="Sign out" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1.1rem;padding:.2rem .4rem;margin-left:.4rem;" aria-label="Sign out">&#x23FB;</button>
+          </form>
         </div>
       </header>
 

@@ -4,6 +4,13 @@ const path    = require("path");
 const fs      = require("fs");
 const multer  = require("multer");
 
+// ── Auth middleware ───────────────────────────────────────────────────────────
+const { requireLogin, requireOwner } = require("../middleware/auth");
+
+// Every route in this file requires a valid session.
+// The login/logout routes live in routes/auth.js and are NOT protected.
+router.use(requireLogin);
+
 // Legacy in-memory data (subjects, grades, users — unchanged)
 const data    = require("../data/sampleData");
 // New persistent content store
@@ -152,7 +159,7 @@ router.get("/content", (req, res) => {
 });
 
 // ── POST: Upload a PDF Learning Material ─────────────────────────────────────
-router.post("/content/material", upload.single("pdfFile"), (req, res) => {
+router.post("/content/material", requireOwner, upload.single("pdfFile"), (req, res) => {
   try {
     const { title, description, grade, subject, topic, term, year, materialType } = req.body;
 
@@ -193,7 +200,7 @@ router.post("/content/material", upload.single("pdfFile"), (req, res) => {
 });
 
 // ── POST: Delete a material ──────────────────────────────────────────────────
-router.post("/content/material/:id/delete", (req, res) => {
+router.post("/content/material/:id/delete", requireOwner, (req, res) => {
   const item = store.materials.remove(req.params.id);
   if (item) {
     const absPath = item._diskPath || (item.filePath ? path.join(__dirname, "..", item.filePath) : null);
@@ -205,14 +212,14 @@ router.post("/content/material/:id/delete", (req, res) => {
 });
 
 // ── POST: Toggle publish status of a material ────────────────────────────────
-router.post("/content/material/:id/toggle", (req, res) => {
+router.post("/content/material/:id/toggle", requireOwner, (req, res) => {
   const item = store.materials.findById(req.params.id);
   if (item) store.materials.update(req.params.id, { published: !item.published });
   res.redirect("/admin/content?tab=materials&flash=success&flashMsg=Status+updated.");
 });
 
 // ── POST: Add Exam Info ──────────────────────────────────────────────────────
-router.post("/content/examinfo", (req, res) => {
+router.post("/content/examinfo", requireOwner, (req, res) => {
   const { title, category, grade, content, published } = req.body;
   if (!title || !content) {
     return res.redirect("/admin/content?tab=examinfo&flash=error&flashMsg=Title+and+content+are+required.");
@@ -222,13 +229,13 @@ router.post("/content/examinfo", (req, res) => {
 });
 
 // ── POST: Delete Exam Info ───────────────────────────────────────────────────
-router.post("/content/examinfo/:id/delete", (req, res) => {
+router.post("/content/examinfo/:id/delete", requireOwner, (req, res) => {
   store.examInfo.remove(req.params.id);
   res.redirect("/admin/content?tab=examinfo&flash=success&flashMsg=Exam+info+deleted.");
 });
 
 // ── POST: Toggle publish Exam Info ───────────────────────────────────────────
-router.post("/content/examinfo/:id/toggle", (req, res) => {
+router.post("/content/examinfo/:id/toggle", requireOwner, (req, res) => {
   const item = store.examInfo.findById(req.params.id);
   if (item) store.examInfo.update(req.params.id, { published: !item.published });
   res.redirect("/admin/content?tab=examinfo&flash=success&flashMsg=Status+updated.");
@@ -246,7 +253,7 @@ router.get("/announcements", (req, res) => {
   });
 });
 
-router.post("/announcements", (req, res) => {
+router.post("/announcements", requireOwner, (req, res) => {
   const { title, body, grade, published } = req.body;
   if (!title || !body) {
     return res.redirect("/admin/announcements?flash=error&flashMsg=Title+and+body+are+required.");
@@ -255,12 +262,12 @@ router.post("/announcements", (req, res) => {
   res.redirect("/admin/announcements?flash=success&flashMsg=Announcement+saved.");
 });
 
-router.post("/announcements/:id/delete", (req, res) => {
+router.post("/announcements/:id/delete", requireOwner, (req, res) => {
   store.announcements.remove(req.params.id);
   res.redirect("/admin/announcements?flash=success&flashMsg=Announcement+deleted.");
 });
 
-router.post("/announcements/:id/toggle", (req, res) => {
+router.post("/announcements/:id/toggle", requireOwner, (req, res) => {
   const item = store.announcements.findById(req.params.id);
   if (item) store.announcements.update(req.params.id, { published: !item.published });
   res.redirect("/admin/announcements?flash=success&flashMsg=Status+updated.");

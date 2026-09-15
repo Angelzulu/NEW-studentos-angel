@@ -1,10 +1,13 @@
-const express = require("express");
-const path    = require("path");
-const os      = require("os");
-const fs      = require("fs");
+const express      = require("express");
+const path         = require("path");
+const os           = require("os");
+const fs           = require("fs");
+const session      = require("express-session");
+const flash        = require("connect-flash");
 
 const siteRoutes  = require("./routes/site");
 const adminRoutes = require("./routes/admin");
+const authRoutes  = require("./routes/auth");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -61,6 +64,23 @@ app.get("/tmp-files/:filename", (req, res) => {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// ── Sessions ─────────────────────────────────────────────────────────────────
+app.use(session({
+  name:   "studentos.sid",
+  secret: process.env.SESSION_SECRET || "change-me-in-production-use-env-var",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,                                      // no JS access
+    secure:   process.env.NODE_ENV === "production",     // HTTPS only in prod
+    maxAge:   8 * 60 * 60 * 1000,                        // 8-hour sessions
+    sameSite: "lax",
+  },
+}));
+
+// ── Flash messages (used by auth routes) ─────────────────────────────────────
+app.use(flash());
+
 // ── Globals available in all views ───────────────────────────────────────────
 app.use((req, res, next) => {
   res.locals.siteName    = "Student OS";
@@ -70,7 +90,8 @@ app.use((req, res, next) => {
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 app.use("/", siteRoutes);
-app.use("/admin", adminRoutes);
+app.use("/admin", authRoutes);   // login / logout (unprotected)
+app.use("/admin", adminRoutes);  // all other admin routes (protected inside)
 
 // ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
