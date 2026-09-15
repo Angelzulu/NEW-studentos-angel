@@ -13,6 +13,14 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const HOST = "0.0.0.0";
 
+// Render (and Vercel, Heroku, etc.) sit behind a reverse proxy that terminates
+// HTTPS and forwards requests to this app over plain HTTP, setting an
+// "X-Forwarded-Proto: https" header. Without this line, Express has no way
+// to know the original request was secure, so express-session's
+// `cookie.secure: true` check fails and it silently refuses to set the
+// session cookie — the exact cause of "login does nothing" in production.
+app.set("trust proxy", 1);
+
 // ── Ensure persistent storage directories exist (local dev only) ──────────────
 // Vercel's filesystem is read-only; skip directory creation in production.
 if (process.env.NODE_ENV !== "production") {
