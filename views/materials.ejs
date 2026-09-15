@@ -49,7 +49,7 @@
 <!-- Results -->
 <% if (materials.length === 0) { %>
   <div class="site-empty-state">
-    <div class="empty-icon">📄</div>
+    <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></div>
     <div class="empty-title">No materials found</div>
     <div class="empty-sub">Try adjusting your filters or check back later.</div>
   </div>
@@ -57,7 +57,7 @@
   <div class="materials-grid">
     <% materials.forEach(function(m) { %>
       <div class="material-card">
-        <div class="material-card-icon">📄</div>
+        <div class="material-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></div>
         <div class="material-card-body">
           <div class="material-card-badges">
             <span class="badge"><%= m.grade %></span>
@@ -73,8 +73,8 @@
             <% if (m.term) { %><span><%= m.term %></span><% } %>
             <% if (m.topic) { %><span><%= m.topic %></span><% } %>
             <span><%= m.fileSize || '' %></span>
-            <span>👁 <%= m.views || 0 %></span>
-            <span>⬇ <%= m.downloads || 0 %></span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> <%= m.views || 0 %></span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg> <%= m.downloads || 0 %></span>
           </div>
         </div>
         <div class="material-card-actions">

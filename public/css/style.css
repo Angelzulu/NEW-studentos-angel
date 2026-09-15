@@ -638,6 +638,11 @@ input, select, textarea {
   justify-content: center;
 }
 
+.subject-card .subject-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
 .subject-card h3 {
   font-size: 16px;
   font-weight: 700;
@@ -773,9 +778,16 @@ input, select, textarea {
   color: var(--color-text-muted);
 }
 
-.empty-state .empty-icon {
-  font-size: 40px;
+.empty-icon {
+  color: var(--color-text-muted);
   margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.empty-icon svg {
+  width: 40px;
+  height: 40px;
 }
 
 /* ==========================================================================
@@ -993,7 +1005,13 @@ input, select, textarea {
   transition: box-shadow 0.15s;
 }
 .material-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.06); }
-.material-card-icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+.material-card-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+  display: flex;
+}
+.material-card-icon svg { width: 24px; height: 24px; }
 .material-card-body { flex: 1; min-width: 0; }
 .material-card-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
 .material-card-title {
@@ -1014,6 +1032,16 @@ input, select, textarea {
   font-size: 12px;
   color: var(--color-text-faint);
   flex-wrap: wrap;
+}
+.material-card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.material-card-meta svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 .material-card-actions {
   display: flex;
@@ -1056,3 +1084,51 @@ input, select, textarea {
 .page-header { margin-bottom: 28px; }
 .page-title  { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
 .page-sub    { color: var(--color-text-muted); font-size: 15px; }
+
+/* ══════════════════════════════════════════════════════════════════
+   Contact / About page
+   ══════════════════════════════════════════════════════════════════ */
+.about-card { margin-bottom: 36px; }
+.about-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
+.about-text { color: var(--color-text-muted); font-size: 14px; line-height: 1.7; }
+.about-founder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+.about-founder-label { font-size: 12px; color: var(--color-text-faint); }
+.about-founder-name  { font-size: 14px; font-weight: 700; }
+
+.contact-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+.contact-card:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+.contact-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.contact-icon svg { width: 22px; height: 22px; }
+.contact-card h3 { font-size: 16px; font-weight: 700; }
+.contact-detail { font-size: 14px; color: var(--color-text-muted); }
+.contact-cta {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-top: 8px;
+}

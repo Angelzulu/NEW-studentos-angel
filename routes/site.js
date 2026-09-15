@@ -47,10 +47,8 @@ router.get("/grade/:gradeId", (req, res) => {
     .sort((a, b) => a.localeCompare(b))
     .map(subject => ({
       subject,
-      materials: bySubject[subject].sort((a, b) => {
-        const yearDiff = (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0);
-        return yearDiff !== 0 ? yearDiff : a.title.localeCompare(b.title);
-      }),
+      count:         bySubject[subject].length,
+      pastPaperCount: bySubject[subject].filter(m => m.materialType === "Past Paper").length,
     }));
 
   res.render("grade", {
@@ -59,6 +57,54 @@ router.get("/grade/:gradeId", (req, res) => {
     gradeNumber: gradeId,
     tagline:     GRADE_TAGLINES[gradeId] || `Learning materials for ${gradeName}`,
     subjectSections,
+  });
+});
+
+// ── Grade + Subject — past papers organized by year, e.g. Grade 12 → English ─
+router.get("/grade/:gradeId/:subject", (req, res) => {
+  const gradeId  = req.params.gradeId;
+  const gradeDef = data.grades.find(g => g.id === `grade-${gradeId}`);
+  if (!gradeDef) return res.status(404).render("404", { title: "Page Not Found" });
+
+  const gradeName   = gradeDef.name;
+  const subjectName = req.params.subject;
+
+  // Only published materials that belong to this grade + subject
+  const subjectMaterials = store.materials
+    .all()
+    .filter(m => m.published &&
+      (m.grade === gradeName || m.grade === "All Grades") &&
+      ((m.subject && m.subject.trim()) || "General") === subjectName);
+
+  if (subjectMaterials.length === 0) {
+    return res.status(404).render("404", { title: "Page Not Found" });
+  }
+
+  const pastPapers = subjectMaterials.filter(m => m.materialType === "Past Paper");
+  const otherMaterials = subjectMaterials.filter(m => m.materialType !== "Past Paper");
+
+  // Group past papers by year, newest year first
+  const byYear = {};
+  pastPapers.forEach(m => {
+    const year = m.year || "Undated";
+    if (!byYear[year]) byYear[year] = [];
+    byYear[year].push(m);
+  });
+
+  const yearSections = Object.keys(byYear)
+    .sort((a, b) => (parseInt(b, 10) || 0) - (parseInt(a, 10) || 0))
+    .map(year => ({
+      year,
+      papers: byYear[year].sort((a, b) => a.title.localeCompare(b.title)),
+    }));
+
+  res.render("grade-subject", {
+    title:       `${subjectName} — ${gradeName}`,
+    gradeName,
+    gradeNumber: gradeId,
+    subjectName,
+    yearSections,
+    otherMaterials,
   });
 });
 
@@ -147,6 +193,11 @@ router.get("/resources", (req, res) => {
     years:   data.years,
     filters: {},
   });
+});
+
+// ── Contact / About ──────────────────────────────────────────────────────────
+router.get("/contact", (req, res) => {
+  res.render("contact", { title: "Contact" });
 });
 
 // ── Announcements (student-facing) ──────────────────────────────────────────

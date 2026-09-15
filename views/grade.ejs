@@ -13,51 +13,24 @@
 
     <% if (subjectSections.length === 0) { %>
       <div class="empty-state">
-        <div class="empty-icon">📄</div>
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></div>
         <div class="empty-title">No learning materials available yet.</div>
         <p>The admin will add real papers for <%= gradeName %> soon — check back later.</p>
       </div>
     <% } else { %>
-      <% subjectSections.forEach(function(sec) { %>
-        <div class="grade-section-block">
-          <div class="section-head">
-            <div>
-              <h2><%= sec.subject %></h2>
-              <p class="section-sub"><%= sec.materials.length %> item<%= sec.materials.length === 1 ? '' : 's' %> available</p>
+      <div class="card-grid">
+        <% subjectSections.forEach(function(sec) { %>
+          <a class="card subject-card" href="/grade/<%= gradeNumber %>/<%= encodeURIComponent(sec.subject) %>">
+            <div class="subject-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 5.5V20.5"/><path d="M20 18H6.5A2.5 2.5 0 0 0 4 20.5"/></svg></div>
+            <h3><%= sec.subject %></h3>
+            <div class="subject-meta"><%= gradeName %></div>
+            <div class="subject-footer">
+              <span class="badge"><%= sec.pastPaperCount %> paper<%= sec.pastPaperCount === 1 ? '' : 's' %></span>
+              <span class="section-link">View subject &rarr;</span>
             </div>
-          </div>
-
-          <div class="materials-grid">
-            <% sec.materials.forEach(function(m) { %>
-              <div class="material-card">
-                <div class="material-card-icon">📄</div>
-                <div class="material-card-body">
-                  <div class="material-card-badges">
-                    <% if (m.subject) { %><span class="badge"><%= m.subject %></span><% } %>
-                    <% if (m.year) { %><span class="badge badge-muted"><%= m.year %></span><% } %>
-                    <span class="badge badge-muted"><%= m.materialType %></span>
-                  </div>
-                  <h3 class="material-card-title"><%= m.title %></h3>
-                  <% if (m.description) { %>
-                    <p class="material-card-desc"><%= m.description %></p>
-                  <% } %>
-                  <div class="material-card-meta">
-                    <% if (m.term) { %><span><%= m.term %></span><% } %>
-                    <% if (m.topic) { %><span><%= m.topic %></span><% } %>
-                    <span><%= m.fileSize || '' %></span>
-                    <span>👁 <%= (m.views || 0).toLocaleString() %> views</span>
-                    <span>⬇ <%= (m.downloads || 0).toLocaleString() %> downloads</span>
-                  </div>
-                </div>
-                <div class="material-card-actions">
-                  <a href="/materials/<%= m.id %>/view" class="btn btn-primary">View</a>
-                  <a href="/materials/<%= m.id %>/download" class="btn btn-outline">Download</a>
-                </div>
-              </div>
-            <% }); %>
-          </div>
-        </div>
-      <% }); %>
+          </a>
+        <% }); %>
+      </div>
     <% } %>
 
   </div>

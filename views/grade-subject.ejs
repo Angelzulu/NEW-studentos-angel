@@ -1,0 +1,107 @@
+<%- include('partials/header') %>
+
+<div class="grade-hero">
+  <div class="container">
+    <div class="grade-hero-badge"><%= gradeNumber %></div>
+    <h1><%= subjectName %></h1>
+    <p><%= gradeName %> &middot; <a href="/grade/<%= gradeNumber %>">&larr; Back to <%= gradeName %></a></p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+
+    <% if (yearSections.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></div>
+        <div class="empty-title">No past papers available yet.</div>
+        <p>The admin will add real past papers for <%= subjectName %> soon — check back later.</p>
+      </div>
+    <% } else { %>
+      <% yearSections.forEach(function(ys) { %>
+        <div class="grade-section-block">
+          <div class="section-head">
+            <div>
+              <h2><%= ys.year %></h2>
+              <p class="section-sub"><%= ys.papers.length %> paper<%= ys.papers.length === 1 ? '' : 's' %> available</p>
+            </div>
+          </div>
+
+          <div class="materials-grid">
+            <% ys.papers.forEach(function(m) { %>
+              <div class="material-card">
+                <div class="material-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></div>
+                <div class="material-card-body">
+                  <div class="material-card-badges">
+                    <% if (m.subject) { %><span class="badge"><%= m.subject %></span><% } %>
+                    <% if (m.year) { %><span class="badge badge-muted"><%= m.year %></span><% } %>
+                    <span class="badge badge-muted"><%= m.materialType %></span>
+                  </div>
+                  <h3 class="material-card-title"><%= m.title %></h3>
+                  <% if (m.description) { %>
+                    <p class="material-card-desc"><%= m.description %></p>
+                  <% } %>
+                  <div class="material-card-meta">
+                    <% if (m.term) { %><span><%= m.term %></span><% } %>
+                    <% if (m.topic) { %><span><%= m.topic %></span><% } %>
+                    <span><%= m.fileSize || '' %></span>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> <%= (m.views || 0).toLocaleString() %> views</span>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg> <%= (m.downloads || 0).toLocaleString() %> downloads</span>
+                  </div>
+                </div>
+                <div class="material-card-actions">
+                  <a href="/materials/<%= m.id %>/view" class="btn btn-primary">View</a>
+                  <a href="/materials/<%= m.id %>/download" class="btn btn-outline">Download</a>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      <% }); %>
+    <% } %>
+
+    <% if (otherMaterials.length > 0) { %>
+      <div class="grade-section-block">
+        <div class="section-head">
+          <div>
+            <h2>Other materials</h2>
+            <p class="section-sub"><%= otherMaterials.length %> item<%= otherMaterials.length === 1 ? '' : 's' %> available</p>
+          </div>
+        </div>
+
+        <div class="materials-grid">
+          <% otherMaterials.forEach(function(m) { %>
+            <div class="material-card">
+              <div class="material-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h8l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></div>
+              <div class="material-card-body">
+                <div class="material-card-badges">
+                  <% if (m.subject) { %><span class="badge"><%= m.subject %></span><% } %>
+                  <% if (m.year) { %><span class="badge badge-muted"><%= m.year %></span><% } %>
+                  <span class="badge badge-muted"><%= m.materialType %></span>
+                </div>
+                <h3 class="material-card-title"><%= m.title %></h3>
+                <% if (m.description) { %>
+                  <p class="material-card-desc"><%= m.description %></p>
+                <% } %>
+                <div class="material-card-meta">
+                  <% if (m.term) { %><span><%= m.term %></span><% } %>
+                  <% if (m.topic) { %><span><%= m.topic %></span><% } %>
+                  <span><%= m.fileSize || '' %></span>
+                  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg> <%= (m.views || 0).toLocaleString() %> views</span>
+                  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg> <%= (m.downloads || 0).toLocaleString() %> downloads</span>
+                </div>
+              </div>
+              <div class="material-card-actions">
+                <a href="/materials/<%= m.id %>/view" class="btn btn-primary">View</a>
+                <a href="/materials/<%= m.id %>/download" class="btn btn-outline">Download</a>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</section>
+
+<%- include('partials/footer') %>
