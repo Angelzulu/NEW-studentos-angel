@@ -1,0 +1,403 @@
+<%- include('../partials/admin-header') %>
+
+<% if (flash) { %>
+  <div class="flash-banner flash-<%= flash === 'error' ? 'error' : 'success' %>">
+    <%= flashMsg || (flash === 'success' ? '✅ Done.' : '⚠️ Something went wrong.') %>
+  </div>
+<% } %>
+
+<!-- Tab navigation -->
+<div class="upload-tabs" id="uploadTabs">
+  <button class="upload-tab <%= tab === 'materials' ? 'active' : '' %>" data-tab="materials">📄 Learning Materials</button>
+  <button class="upload-tab <%= tab === 'examinfo'  ? 'active' : '' %>" data-tab="examinfo">📅 Exam Information</button>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     TAB 1: Learning Materials (PDF upload)
+════════════════════════════════════════════ -->
+<div class="upload-panel <%= tab === 'materials' ? 'active' : '' %>" id="tab-materials">
+
+  <!-- Upload form -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Upload a Learning Material</h2>
+      <span class="panel-sub">Upload the actual PDF. It will be stored on the server and students can view or download it directly inside Student OS.</span>
+    </div>
+    <div class="panel-body">
+      <form method="POST" action="/admin/content/material" enctype="multipart/form-data" class="upload-form">
+
+        <div class="form-step">
+          <div class="form-step-label">Step 1 — What type of material is this? <span class="req">*</span></div>
+          <div class="type-pill-group">
+            <% materialTypes.forEach(function(t) { %>
+              <label class="type-pill">
+                <input type="radio" name="materialType" value="<%= t %>" required>
+                <span><%= t %></span>
+              </label>
+            <% }); %>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="form-step-label">Step 2 — Grade <span class="req">*</span></div>
+          <div class="grade-pill-group">
+            <% grades.forEach(function(g) { %>
+              <label class="grade-pill">
+                <input type="radio" name="grade" value="<%= g.name %>" required>
+                <span><%= g.name %></span>
+              </label>
+            <% }); %>
+            <label class="grade-pill">
+              <input type="radio" name="grade" value="All Grades">
+              <span>All Grades</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="form-step-label">Step 3 — Subject &amp; Topic</div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="matSubject">Subject</label>
+              <% if (subjects.length > 0) { %>
+                <select name="subject" id="matSubject">
+                  <option value="">— All subjects —</option>
+                  <% subjects.forEach(function(s) { %><option value="<%= s.name %>"><%= s.name %></option><% }); %>
+                </select>
+              <% } else { %>
+                <input type="text" name="subject" id="matSubject" placeholder="e.g. Mathematics">
+              <% } %>
+            </div>
+            <div class="form-field">
+              <label for="matTopic">Topic</label>
+              <input type="text" name="topic" id="matTopic" placeholder="e.g. Algebra, Cell Biology">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="form-step-label">Step 4 — Year &amp; Term</div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="matYear">Year</label>
+              <select name="year" id="matYear">
+                <option value="">— Select year —</option>
+                <% years.forEach(function(y) { %><option value="<%= y %>"><%= y %></option><% }); %>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="matTerm">Term</label>
+              <select name="term" id="matTerm">
+                <option value="">— Select term —</option>
+                <option>Term 1</option>
+                <option>Term 2</option>
+                <option>Term 3</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="form-step-label">Step 5 — Title &amp; Description <span class="req">*</span></div>
+          <div class="form-row">
+            <div class="form-field form-field-wide">
+              <label for="matTitle">Title <span class="req">*</span></label>
+              <input type="text" name="title" id="matTitle" placeholder="e.g. Grade 12 Mathematics Past Paper 2024 — Paper 1" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field form-field-wide">
+              <label for="matDesc">Description</label>
+              <textarea name="description" id="matDesc" rows="2" placeholder="Brief description of this material (optional)"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="form-step-label">Step 6 — Upload the PDF <span class="req">*</span></div>
+          <div class="form-field">
+            <div class="pdf-upload-area" id="pdfUploadArea">
+              <span class="pdf-upload-icon">📄</span>
+              <span class="pdf-upload-label">Click to choose a PDF or drag &amp; drop here</span>
+              <span class="pdf-upload-hint">PDF only · max 50 MB</span>
+              <input type="file" name="pdfFile" id="pdfFile" accept="application/pdf" required class="pdf-upload-input">
+            </div>
+            <div class="pdf-upload-chosen" id="pdfUploadChosen" style="display:none;">
+              <span class="pdf-chosen-icon">✅</span>
+              <span class="pdf-chosen-name" id="pdfChosenName"></span>
+              <button type="button" class="pdf-chosen-clear" id="pdfClearBtn">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Upload Material</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Materials list -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Materials on site (<%= materials.length %>)</h2>
+      <!-- Search/filter row -->
+      <div class="table-filters">
+        <input type="text" id="matSearch" placeholder="Search title, subject, topic…" class="filter-input">
+        <select id="matFilterGrade" class="filter-select">
+          <option value="">All grades</option>
+          <% grades.forEach(function(g) { %><option><%= g.name %></option><% }); %>
+          <option>All Grades</option>
+        </select>
+        <select id="matFilterType" class="filter-select">
+          <option value="">All types</option>
+          <% materialTypes.forEach(function(t) { %><option><%= t %></option><% }); %>
+        </select>
+      </div>
+    </div>
+    <div class="panel-body">
+      <% if (materials.length === 0) { %>
+        <%- include('../partials/admin-empty-state', { icon: '📄', note: 'No materials uploaded yet. Use the form above to upload the first PDF.' }) %>
+      <% } else { %>
+        <div class="data-table-wrap">
+          <table class="data-table" id="materialsTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Grade</th>
+                <th>Subject</th>
+                <th>Year</th>
+                <th>Size</th>
+                <th>Views</th>
+                <th>Downloads</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% materials.forEach(function(m) { %>
+                <tr data-title="<%= m.title.toLowerCase() %>"
+                    data-subject="<%= m.subject.toLowerCase() %>"
+                    data-topic="<%= m.topic ? m.topic.toLowerCase() : '' %>"
+                    data-grade="<%= m.grade %>"
+                    data-type="<%= m.materialType %>">
+                  <td>
+                    <strong><%= m.title %></strong>
+                    <% if (m.topic) { %><br><small class="text-muted"><%= m.topic %></small><% } %>
+                  </td>
+                  <td><span class="badge badge-muted"><%= m.materialType %></span></td>
+                  <td><span class="badge"><%= m.grade %></span></td>
+                  <td><%= m.subject || '—' %></td>
+                  <td><%= m.year || '—' %></td>
+                  <td><%= m.fileSize || '—' %></td>
+                  <td><%= m.views || 0 %></td>
+                  <td><%= m.downloads || 0 %></td>
+                  <td>
+                    <span class="status-pill <%= m.published ? 'status-live' : 'status-draft' %>">
+                      <%= m.published ? 'Live' : 'Draft' %>
+                    </span>
+                  </td>
+                  <td class="actions-cell">
+                    <a href="<%= m.filePath %>" target="_blank" class="btn-xs btn-outline">Preview</a>
+                    <form method="POST" action="/admin/content/material/<%= m.id %>/toggle" style="display:inline">
+                      <button class="btn-xs <%= m.published ? 'btn-warning' : 'btn-success' %>">
+                        <%= m.published ? 'Unpublish' : 'Publish' %>
+                      </button>
+                    </form>
+                    <form method="POST" action="/admin/content/material/<%= m.id %>/delete"
+                          style="display:inline"
+                          onsubmit="return confirm('Delete this material and its PDF file? This cannot be undone.')">
+                      <button class="btn-xs btn-danger">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     TAB 2: Exam Information (text records)
+════════════════════════════════════════════ -->
+<div class="upload-panel <%= tab === 'examinfo' ? 'active' : '' %>" id="tab-examinfo">
+
+  <!-- Create form -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Create Exam Information</h2>
+      <span class="panel-sub">Write exam dates, rules, registration info, results, syllabus details, or study tips. Content is displayed directly inside Student OS — no PDF needed.</span>
+    </div>
+    <div class="panel-body">
+      <form method="POST" action="/admin/content/examinfo" class="upload-form">
+
+        <div class="form-step">
+          <div class="form-step-label">Category &amp; Grade</div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="examCat">Category <span class="req">*</span></label>
+              <select name="category" id="examCat">
+                <% examCategories.forEach(function(c) { %><option><%= c %></option><% }); %>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="examGrade">Grade</label>
+              <select name="grade" id="examGrade">
+                <option value="All">All Grades</option>
+                <% grades.forEach(function(g) { %><option><%= g.name %></option><% }); %>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="form-step-label">Title &amp; Content</div>
+          <div class="form-row">
+            <div class="form-field form-field-wide">
+              <label for="examTitle">Title <span class="req">*</span></label>
+              <input type="text" name="title" id="examTitle" placeholder="e.g. 2026 Grade 12 Examination Information" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-field form-field-wide">
+              <label for="examContent">Content <span class="req">*</span></label>
+              <textarea name="content" id="examContent" rows="8"
+                placeholder="Write the full exam information here. You can use line breaks to format the text." required></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-step">
+          <div class="form-step-label">Publish now?</div>
+          <label class="toggle-label">
+            <input type="checkbox" name="published" value="on" checked>
+            <span>Published — students can see this</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save Exam Info</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Exam info list -->
+  <div class="panel">
+    <div class="panel-head"><h2>Exam info on site (<%= examInfo.length %>)</h2></div>
+    <div class="panel-body">
+      <% if (examInfo.length === 0) { %>
+        <%- include('../partials/admin-empty-state', { icon: '📅', note: 'No exam information added yet.' }) %>
+      <% } else { %>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Title</th><th>Category</th><th>Grade</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              <% examInfo.forEach(function(e) { %>
+                <tr>
+                  <td><strong><%= e.title %></strong></td>
+                  <td><span class="badge badge-muted"><%= e.category %></span></td>
+                  <td><span class="badge"><%= e.grade %></span></td>
+                  <td>
+                    <span class="status-pill <%= e.published ? 'status-live' : 'status-draft' %>">
+                      <%= e.published ? 'Live' : 'Draft' %>
+                    </span>
+                  </td>
+                  <td class="actions-cell">
+                    <form method="POST" action="/admin/content/examinfo/<%= e.id %>/toggle" style="display:inline">
+                      <button class="btn-xs <%= e.published ? 'btn-warning' : 'btn-success' %>">
+                        <%= e.published ? 'Unpublish' : 'Publish' %>
+                      </button>
+                    </form>
+                    <form method="POST" action="/admin/content/examinfo/<%= e.id %>/delete"
+                          style="display:inline"
+                          onsubmit="return confirm('Delete this exam info?')">
+                      <button class="btn-xs btn-danger">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>
+
+<script>
+// ── PDF file picker UX ────────────────────────────────────────────────────────
+(function () {
+  const area    = document.getElementById("pdfUploadArea");
+  const input   = document.getElementById("pdfFile");
+  const chosen  = document.getElementById("pdfUploadChosen");
+  const name    = document.getElementById("pdfChosenName");
+  const clearBtn = document.getElementById("pdfClearBtn");
+
+  function showChosen(file) {
+    area.style.display   = "none";
+    chosen.style.display = "flex";
+    name.textContent = file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)";
+  }
+
+  area && area.addEventListener("click", () => input && input.click());
+  input && input.addEventListener("change", function () {
+    if (this.files[0]) showChosen(this.files[0]);
+  });
+  clearBtn && clearBtn.addEventListener("click", function () {
+    input.value = "";
+    area.style.display   = "";
+    chosen.style.display = "none";
+  });
+
+  // Drag & drop
+  area && area.addEventListener("dragover", e => { e.preventDefault(); area.classList.add("drag-over"); });
+  area && area.addEventListener("dragleave", () => area.classList.remove("drag-over"));
+  area && area.addEventListener("drop", e => {
+    e.preventDefault();
+    area.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === "application/pdf") {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      showChosen(file);
+    }
+  });
+})();
+
+// ── Client-side table filter ──────────────────────────────────────────────────
+(function () {
+  const search      = document.getElementById("matSearch");
+  const gradeFilter = document.getElementById("matFilterGrade");
+  const typeFilter  = document.getElementById("matFilterType");
+  const table       = document.getElementById("materialsTable");
+  if (!table) return;
+
+  function applyFilters() {
+    const q     = search ? search.value.toLowerCase() : "";
+    const grade = gradeFilter ? gradeFilter.value : "";
+    const type  = typeFilter  ? typeFilter.value  : "";
+    table.querySelectorAll("tbody tr").forEach(function (row) {
+      const matchQ = !q || row.dataset.title.includes(q) ||
+                     row.dataset.subject.includes(q) ||
+                     row.dataset.topic.includes(q);
+      const matchG = !grade || row.dataset.grade === grade;
+      const matchT = !type  || row.dataset.type  === type;
+      row.style.display = matchQ && matchG && matchT ? "" : "none";
+    });
+  }
+
+  search      && search.addEventListener("input", applyFilters);
+  gradeFilter && gradeFilter.addEventListener("change", applyFilters);
+  typeFilter  && typeFilter.addEventListener("change", applyFilters);
+})();
+</script>

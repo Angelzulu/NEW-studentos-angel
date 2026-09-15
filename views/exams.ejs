@@ -1,0 +1,31 @@
+<%- include('partials/header') %>
+
+<div class="page-header">
+  <h1 class="page-title">Exam Information</h1>
+  <p class="page-sub">ECZ exam dates, registration info, rules and notices.</p>
+</div>
+
+<% if (examInfo.length === 0) { %>
+  <div class="site-empty-state">
+    <div class="empty-icon">📅</div>
+    <div class="empty-title">No exam information yet</div>
+    <div class="empty-sub">Check back closer to the examination period.</div>
+  </div>
+<% } else { %>
+  <div class="announce-list">
+    <% examInfo.forEach(function(e) { %>
+      <div class="announce-item">
+        <div class="announce-header">
+          <h2 class="announce-title"><%= e.title %></h2>
+          <div class="announce-meta">
+            <span class="badge badge-muted"><%= e.category %></span>
+            <span class="badge"><%= e.grade %></span>
+          </div>
+        </div>
+        <div class="announce-body"><%= e.content.replace(/\n/g, '<br>') %></div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

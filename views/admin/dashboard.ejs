@@ -1,0 +1,110 @@
+<%- include('../partials/admin-header') %>
+
+<div class="dashboard-grid">
+  <div class="stat-card">
+    <div class="stat-icon">&#128203;</div>
+    <div class="stat-info">
+      <strong class="stat-value"><%= stats.materials %></strong>
+      <span>Learning Materials</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon icon-green">&#128218;</div>
+    <div class="stat-info">
+      <strong class="stat-value"><%= stats.subjects %></strong>
+      <span>Subjects</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon icon-orange">&#128197;</div>
+    <div class="stat-info">
+      <strong class="stat-value"><%= stats.examInfo %></strong>
+      <span>Exam Info Records</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon icon-purple">&#128227;</div>
+    <div class="stat-info">
+      <strong class="stat-value"><%= stats.announcements %></strong>
+      <span>Announcements</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">&#128065;</div>
+    <div class="stat-info">
+      <strong class="stat-value"><%= stats.totalViews.toLocaleString() %></strong>
+      <span>Total Views</span>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon icon-green">&#11015;&#65039;</div>
+    <div class="stat-info">
+      <strong class="stat-value"><%= stats.totalDownloads.toLocaleString() %></strong>
+      <span>Total Downloads</span>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2>Quick Actions</h2>
+  </div>
+  <div class="panel-body quick-actions">
+    <a href="/admin/content?tab=materials" class="quick-action-btn">
+      <span class="qa-icon">&#128228;</span>
+      <span>Upload PDF Material</span>
+    </a>
+    <a href="/admin/content?tab=examinfo" class="quick-action-btn">
+      <span class="qa-icon">&#128197;</span>
+      <span>Add Exam Info</span>
+    </a>
+    <a href="/admin/announcements" class="quick-action-btn">
+      <span class="qa-icon">&#128227;</span>
+      <span>Post Announcement</span>
+    </a>
+    <a href="/admin/subjects" class="quick-action-btn">
+      <span class="qa-icon">&#128218;</span>
+      <span>Manage Subjects</span>
+    </a>
+  </div>
+</div>
+
+<% if (stats.materials === 0 && stats.subjects === 0) { %>
+<div class="panel">
+  <div class="panel-head"><h2>Getting Started</h2></div>
+  <div class="panel-body">
+    <div class="onboarding-steps">
+      <div class="onboard-step">
+        <div class="onboard-num">1</div>
+        <div>
+          <strong>Upload your first PDF</strong>
+          <p>Go to <a href="/admin/content?tab=materials">Content → Learning Materials</a> and upload a past paper, notes, or any study material as a real PDF.</p>
+        </div>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-num">2</div>
+        <div>
+          <strong>Add exam information</strong>
+          <p>Post ECZ exam dates, rules, and registration info via <a href="/admin/content?tab=examinfo">Content → Exam Information</a>. No PDF needed — write it directly.</p>
+        </div>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-num">3</div>
+        <div>
+          <strong>Post announcements</strong>
+          <p>Share notices and updates with students via <a href="/admin/announcements">Announcements</a>.</p>
+        </div>
+      </div>
+      <div class="onboard-step">
+        <div class="onboard-num">4</div>
+        <div>
+          <strong>Students access materials</strong>
+          <p>Students visit <a href="/materials" target="_blank">/materials</a> to browse, view PDFs inline, and download files — all inside Student OS.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<%- include('../partials/admin-footer') %>

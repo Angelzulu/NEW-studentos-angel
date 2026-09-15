@@ -1,0 +1,109 @@
+<%- include('../partials/admin-header') %>
+
+<% if (flash) { %>
+  <div class="flash-banner flash-<%= flash === 'error' ? 'error' : 'success' %>">
+    <%= flashMsg || (flash === 'success' ? '✅ Done.' : '⚠️ Something went wrong.') %>
+  </div>
+<% } %>
+
+<!-- Create form -->
+<div class="panel">
+  <div class="panel-head">
+    <h2>Create Announcement</h2>
+    <span class="panel-sub">Post notices, updates, or important information for students.</span>
+  </div>
+  <div class="panel-body">
+    <form method="POST" action="/admin/announcements" class="upload-form">
+
+      <div class="form-step">
+        <div class="form-step-label">Which grade(s) is this for?</div>
+        <div class="grade-pill-group">
+          <label class="grade-pill">
+            <input type="radio" name="grade" value="All" checked>
+            <span>All Grades</span>
+          </label>
+          <% grades.forEach(function(g) { %>
+            <label class="grade-pill">
+              <input type="radio" name="grade" value="<%= g.name %>">
+              <span><%= g.name %></span>
+            </label>
+          <% }); %>
+        </div>
+      </div>
+
+      <div class="form-step">
+        <div class="form-row">
+          <div class="form-field form-field-wide">
+            <label for="annTitle">Title <span class="req">*</span></label>
+            <input type="text" name="title" id="annTitle" placeholder="e.g. Registration Deadline Reminder" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field form-field-wide">
+            <label for="annBody">Announcement text <span class="req">*</span></label>
+            <textarea name="body" id="annBody" rows="5"
+              placeholder="Write the full announcement here." required></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-step">
+        <label class="toggle-label">
+          <input type="checkbox" name="published" value="on" checked>
+          <span>Published — students can see this</span>
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Post Announcement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Announcements list -->
+<div class="panel">
+  <div class="panel-head"><h2>Announcements (<%= announcements.length %>)</h2></div>
+  <div class="panel-body">
+    <% if (announcements.length === 0) { %>
+      <%- include('../partials/admin-empty-state', { icon: '📢', note: 'No announcements yet. Use the form above to post the first one.' }) %>
+    <% } else { %>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Title</th><th>Grade</th><th>Posted</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            <% announcements.forEach(function(a) { %>
+              <tr>
+                <td>
+                  <strong><%= a.title %></strong>
+                  <br><small class="text-muted"><%= a.body.substring(0, 80) %><%= a.body.length > 80 ? '…' : '' %></small>
+                </td>
+                <td><span class="badge"><%= a.grade %></span></td>
+                <td><%= new Date(a.createdAt).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) %></td>
+                <td>
+                  <span class="status-pill <%= a.published ? 'status-live' : 'status-draft' %>">
+                    <%= a.published ? 'Live' : 'Draft' %>
+                  </span>
+                </td>
+                <td class="actions-cell">
+                  <form method="POST" action="/admin/announcements/<%= a.id %>/toggle" style="display:inline">
+                    <button class="btn-xs <%= a.published ? 'btn-warning' : 'btn-success' %>">
+                      <%= a.published ? 'Unpublish' : 'Publish' %>
+                    </button>
+                  </form>
+                  <form method="POST" action="/admin/announcements/<%= a.id %>/delete"
+                        style="display:inline"
+                        onsubmit="return confirm('Delete this announcement?')">
+                    <button class="btn-xs btn-danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/admin-footer') %>

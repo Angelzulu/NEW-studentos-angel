@@ -1,0 +1,33 @@
+<%- include('partials/header') %>
+
+<div class="page-header">
+  <h1 class="page-title">Announcements</h1>
+  <p class="page-sub">Latest notices and updates from Student OS.</p>
+</div>
+
+<% if (announcements.length === 0) { %>
+  <div class="site-empty-state">
+    <div class="empty-icon">📢</div>
+    <div class="empty-title">No announcements yet</div>
+    <div class="empty-sub">Check back soon for updates.</div>
+  </div>
+<% } else { %>
+  <div class="announce-list">
+    <% announcements.forEach(function(a) { %>
+      <div class="announce-item">
+        <div class="announce-header">
+          <h2 class="announce-title"><%= a.title %></h2>
+          <div class="announce-meta">
+            <span class="badge"><%= a.grade %></span>
+            <span class="announce-date">
+              <%= new Date(a.createdAt).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) %>
+            </span>
+          </div>
+        </div>
+        <div class="announce-body"><%= a.body.replace(/\n/g, '<br>') %></div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

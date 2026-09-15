@@ -1,0 +1,36 @@
+<%- include('partials/header') %>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Subjects</h1>
+    <p>Explore all subjects available on Student OS.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <% if (subjects.length === 0) { %>
+      <div class="empty-state site-empty-state">
+        <div class="empty-icon">&#128218;</div>
+        <p class="empty-title">Subjects are being added.</p>
+        <p class="empty-sub">Check back soon — content is being uploaded to the platform.</p>
+      </div>
+    <% } else { %>
+      <div class="card-grid">
+        <% subjects.forEach(function(subject) { %>
+          <a class="card subject-card" href="/papers?subject=<%= encodeURIComponent(subject.name) %>">
+            <div class="subject-icon">&#128218;</div>
+            <h3><%= subject.name %></h3>
+            <div class="subject-meta"><%= subject.grade %></div>
+            <div class="subject-footer">
+              <span class="badge"><%= subject.papers %> paper<%= subject.papers !== 1 ? 's' : '' %></span>
+              <span class="section-link">View papers &rarr;</span>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

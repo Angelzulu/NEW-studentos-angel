@@ -1,0 +1,89 @@
+<%- include('partials/header') %>
+
+<div class="page-header">
+  <h1 class="page-title"><%= title %></h1>
+  <p class="page-sub">Find past papers, notes, textbooks and revision materials.</p>
+</div>
+
+<!-- Filters -->
+<div class="filter-bar">
+  <form method="GET" action="/materials" class="filter-form">
+    <% if (filters.materialType) { %>
+      <input type="hidden" name="materialType" value="<%= filters.materialType %>">
+    <% } %>
+    <select name="grade" onchange="this.form.submit()">
+      <option value="">All Grades</option>
+      <% grades.forEach(function(g) { %>
+        <option <%= filters.grade === g.name ? 'selected' : '' %>><%= g.name %></option>
+      <% }); %>
+    </select>
+    <select name="subject" onchange="this.form.submit()">
+      <option value="">All Subjects</option>
+      <% subjects.forEach(function(s) { %>
+        <option <%= filters.subject === s.name ? 'selected' : '' %>><%= s.name %></option>
+      <% }); %>
+    </select>
+    <% if (!filters.materialType) { %>
+      <select name="materialType" onchange="this.form.submit()">
+        <option value="">All Types</option>
+        <% materialTypes.forEach(function(t) { %>
+          <option <%= filters.materialType === t ? 'selected' : '' %>><%= t %></option>
+        <% }); %>
+      </select>
+    <% } %>
+    <select name="year" onchange="this.form.submit()">
+      <option value="">All Years</option>
+      <% years.forEach(function(y) { %>
+        <option <%= filters.year == y ? 'selected' : '' %>><%= y %></option>
+      <% }); %>
+    </select>
+    <input type="text" name="search" value="<%= filters.search || '' %>"
+           placeholder="Search…" class="filter-search">
+    <button type="submit" class="btn btn-primary">Search</button>
+    <% if (Object.values(filters).some(Boolean)) { %>
+      <a href="/materials" class="btn btn-outline">Clear</a>
+    <% } %>
+  </form>
+</div>
+
+<!-- Results -->
+<% if (materials.length === 0) { %>
+  <div class="site-empty-state">
+    <div class="empty-icon">📄</div>
+    <div class="empty-title">No materials found</div>
+    <div class="empty-sub">Try adjusting your filters or check back later.</div>
+  </div>
+<% } else { %>
+  <div class="materials-grid">
+    <% materials.forEach(function(m) { %>
+      <div class="material-card">
+        <div class="material-card-icon">📄</div>
+        <div class="material-card-body">
+          <div class="material-card-badges">
+            <span class="badge"><%= m.grade %></span>
+            <span class="badge badge-muted"><%= m.materialType %></span>
+            <% if (m.subject) { %><span class="badge badge-muted"><%= m.subject %></span><% } %>
+            <% if (m.year) { %><span class="badge badge-muted"><%= m.year %></span><% } %>
+          </div>
+          <h3 class="material-card-title"><%= m.title %></h3>
+          <% if (m.description) { %>
+            <p class="material-card-desc"><%= m.description %></p>
+          <% } %>
+          <div class="material-card-meta">
+            <% if (m.term) { %><span><%= m.term %></span><% } %>
+            <% if (m.topic) { %><span><%= m.topic %></span><% } %>
+            <span><%= m.fileSize || '' %></span>
+            <span>👁 <%= m.views || 0 %></span>
+            <span>⬇ <%= m.downloads || 0 %></span>
+          </div>
+        </div>
+        <div class="material-card-actions">
+          <a href="/materials/<%= m.id %>/view" class="btn btn-primary">View PDF</a>
+          <a href="/materials/<%= m.id %>/download" class="btn btn-outline">Download</a>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } %>
+
+<%- include('partials/footer') %>

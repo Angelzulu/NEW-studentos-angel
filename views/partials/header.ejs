@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %> | <%= siteName %></title>
+  <meta name="description" content="Student OS - past papers, exam information and study resources for Zambian students." />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="brand">
+        <span class="brand-mark">SOS</span>
+        <span class="brand-name">Student<span>OS</span></span>
+      </a>
+
+      <nav class="main-nav">
+        <a href="/" class="<%= currentPath === '/' ? 'active' : '' %>">Home</a>
+        <a href="/papers" class="<%= currentPath === '/papers' ? 'active' : '' %>">Past Papers</a>
+        <a href="/subjects" class="<%= currentPath === '/subjects' ? 'active' : '' %>">Subjects</a>
+        <a href="/exams" class="<%= currentPath === '/exams' ? 'active' : '' %>">Exam Info</a>
+        <a href="/resources" class="<%= currentPath === '/resources' ? 'active' : '' %>">Resources</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+      </div>
+    </div>
+  </header>

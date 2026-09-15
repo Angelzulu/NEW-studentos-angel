@@ -1,0 +1,98 @@
+<%- include('partials/header') %>
+
+<div class="pdf-viewer-page">
+  <!-- Top bar -->
+  <div class="pdf-topbar">
+    <a href="javascript:history.back()" class="pdf-back-btn">← Back</a>
+    <div class="pdf-meta">
+      <strong class="pdf-meta-title"><%= material.title %></strong>
+      <% if (material.subject || material.grade) { %>
+        <span class="pdf-meta-tags">
+          <% if (material.grade) { %><span class="badge"><%= material.grade %></span><% } %>
+          <% if (material.subject) { %><span class="badge badge-muted"><%= material.subject %></span><% } %>
+          <% if (material.materialType) { %><span class="badge badge-muted"><%= material.materialType %></span><% } %>
+        </span>
+      <% } %>
+    </div>
+    <a href="/materials/<%= material.id %>/download" class="btn btn-primary btn-sm">⬇ Download PDF</a>
+  </div>
+
+  <!-- Embedded PDF -->
+  <div class="pdf-embed-wrap">
+    <iframe
+      src="<%= material.filePath %>#toolbar=1&navpanes=1&view=FitH"
+      class="pdf-iframe"
+      title="<%= material.title %>"
+      allowfullscreen
+    >
+      <div class="pdf-fallback">
+        <p>Your browser cannot display the PDF inline.</p>
+        <a href="/materials/<%= material.id %>/download" class="btn btn-primary">Download PDF to read it</a>
+      </div>
+    </iframe>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
+
+<style>
+/* PDF viewer — full-height, works on mobile & desktop */
+.pdf-viewer-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.pdf-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.pdf-back-btn {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+.pdf-meta {
+  flex: 1;
+  min-width: 0;
+}
+.pdf-meta-title {
+  display: block;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pdf-meta-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.btn-sm { padding: 7px 14px; font-size: 13px; white-space: nowrap; }
+.pdf-embed-wrap {
+  flex: 1;
+  overflow: hidden;
+}
+.pdf-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+.pdf-fallback {
+  padding: 60px 20px;
+  text-align: center;
+}
+@media (max-width: 600px) {
+  .pdf-topbar { gap: 8px; padding: 8px 12px; }
+  .pdf-meta-title { font-size: 13px; }
+}
+</style>

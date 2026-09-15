@@ -1,0 +1,87 @@
+<%- include('partials/header') %>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Past Papers</h1>
+    <p>Browse past examination papers by grade, subject, year and paper number.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <form id="papers-filter-form" class="filter-bar" method="GET" action="/papers">
+      <div class="filter-field">
+        <label for="grade">Grade</label>
+        <select name="grade" id="grade">
+          <option value="">All Grades</option>
+          <% grades.forEach(function(g) { %>
+            <option value="<%= g.name %>" <%= filters.grade === g.name ? 'selected' : '' %>><%= g.name %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="subject">Subject</label>
+        <select name="subject" id="subject">
+          <option value="">All Subjects</option>
+          <% subjects.forEach(function(s) { %>
+            <option value="<%= s.name %>" <%= filters.subject === s.name ? 'selected' : '' %>><%= s.name %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="year">Year</label>
+        <select name="year" id="year">
+          <option value="">All Years</option>
+          <% years.forEach(function(y) { %>
+            <option value="<%= y %>" <%= String(filters.year) === String(y) ? 'selected' : '' %>><%= y %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label for="paper">Paper</label>
+        <select name="paper" id="paper">
+          <option value="">All Papers</option>
+          <% paperTypes.forEach(function(p) { %>
+            <option value="<%= p %>" <%= filters.paper === p ? 'selected' : '' %>><%= p %></option>
+          <% }); %>
+        </select>
+      </div>
+
+      <a href="/papers" class="btn btn-secondary">Reset</a>
+    </form>
+
+    <p class="results-count"><%= papers.length %> paper<%= papers.length === 1 ? '' : 's' %> found</p>
+
+    <% if (papers.length > 0) { %>
+      <div class="card-grid">
+        <% papers.forEach(function(paper) { %>
+          <div class="card paper-card">
+            <div class="paper-top">
+              <h3><%= paper.subject %></h3>
+              <span class="badge badge-muted"><%= paper.year %></span>
+            </div>
+            <div class="paper-meta">
+              <span><%= paper.grade %></span>
+              <span>&bull;</span>
+              <span><%= paper.paper %></span>
+            </div>
+            <div class="paper-footer">
+              <span class="cell-sub"><%= paper.type %> &middot; <%= paper.size %></span>
+              <button class="btn btn-outline btn-sm" type="button">View</button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <div class="empty-icon">&#128193;</div>
+        <p>No past papers match your filters yet. Try adjusting your search.</p>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

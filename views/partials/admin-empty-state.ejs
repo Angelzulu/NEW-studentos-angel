@@ -1,0 +1,7 @@
+<div class="empty-state">
+  <div class="empty-state-icon"><%- icon || '&#128203;' %></div>
+  <p class="empty-state-title">Nothing here yet.</p>
+  <% if (typeof note !== 'undefined' && note) { %>
+    <p class="empty-state-note"><%= note %></p>
+  <% } %>
+</div>

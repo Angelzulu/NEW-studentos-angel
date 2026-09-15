@@ -1,0 +1,36 @@
+<%- include('partials/header') %>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Resources</h1>
+    <p>Study guides, notes and revision material to support your learning.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <% if (resources.length === 0) { %>
+      <div class="empty-state site-empty-state">
+        <div class="empty-icon">&#128196;</div>
+        <p class="empty-title">Resources are being added.</p>
+        <p class="empty-sub">Study guides and revision notes are being uploaded. Check back soon.</p>
+      </div>
+    <% } else { %>
+      <div class="card-grid">
+        <% resources.forEach(function(resource) { %>
+          <div class="card resource-card">
+            <h3><%= resource.title %></h3>
+            <div class="resource-meta"><%= resource.subject %> &middot; <%= resource.grade %> &middot; <%= resource.type %></div>
+            <% if (resource.url && resource.url !== '#') { %>
+              <a href="<%= resource.url %>" target="_blank" class="btn btn-outline btn-sm">View resource</a>
+            <% } else { %>
+              <button class="btn btn-outline btn-sm" disabled>Coming soon</button>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

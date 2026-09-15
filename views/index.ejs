@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+
+<section class="landing-hero">
+  <div class="container landing-hero-inner">
+    <span class="landing-eyebrow">Student OS &middot; Zambia</span>
+    <h1>What grade are you in?</h1>
+    <p>Pick your grade to find past papers, subjects, notes and study materials made for you.</p>
+
+    <div class="grade-choice-grid">
+      <a href="/grade/7" class="grade-choice-card">
+        <span class="grade-choice-number">7</span>
+        <span class="grade-choice-label">Grade 7</span>
+        <span class="grade-choice-sub">Primary leaving examinations</span>
+      </a>
+      <a href="/grade/12" class="grade-choice-card">
+        <span class="grade-choice-number">12</span>
+        <span class="grade-choice-label">Grade 12</span>
+        <span class="grade-choice-sub">School certificate examinations</span>
+      </a>
+    </div>
+
+    <p class="landing-more">
+      Looking for something else? <a href="/subjects">Browse all subjects</a> or
+      <a href="/papers">search past papers</a>.
+    </p>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %> | <%= siteName %> Admin</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <div class="admin-sidebar-backdrop"></div>
+
+    <aside class="admin-sidebar">
+      <a href="/admin" class="brand">
+        <span class="brand-mark">SOS</span>
+        <span>Student<span style="color:var(--color-primary);">OS</span></span>
+      </a>
+      <div class="admin-sidebar-tag">Admin Panel</div>
+
+      <nav class="admin-nav">
+        <a href="/admin" class="<%= activeNav === 'dashboard' ? 'active' : '' %>">
+          <span class="nav-icon">&#9635;</span> Dashboard
+        </a>
+        <a href="/admin/students" class="<%= activeNav === 'students' ? 'active' : '' %>">
+          <span class="nav-icon">&#128101;</span> Students
+        </a>
+        <a href="/admin/teachers" class="<%= activeNav === 'teachers' ? 'active' : '' %>">
+          <span class="nav-icon">&#127891;</span> Teachers
+        </a>
+        <a href="/admin/grades" class="<%= activeNav === 'grades' ? 'active' : '' %>">
+          <span class="nav-icon">&#128200;</span> Grades
+        </a>
+        <a href="/admin/subjects" class="<%= activeNav === 'subjects' ? 'active' : '' %>">
+          <span class="nav-icon">&#128218;</span> Subjects
+        </a>
+        <a href="/admin/content" class="<%= activeNav === 'content' ? 'active' : '' %>">
+          <span class="nav-icon">&#128228;</span> Content
+        </a>
+        <a href="/admin/announcements" class="<%= activeNav === 'announcements' ? 'active' : '' %>">
+          <span class="nav-icon">&#128227;</span> Announcements
+        </a>
+        <a href="/admin/reports" class="<%= activeNav === 'reports' ? 'active' : '' %>">
+          <span class="nav-icon">&#128202;</span> Reports
+        </a>
+        <a href="/admin/settings" class="<%= activeNav === 'settings' ? 'active' : '' %>">
+          <span class="nav-icon">&#9881;</span> Settings
+        </a>
+      </nav>
+
+      <div class="admin-sidebar-footer">
+        <a href="/">&larr; Back to site</a>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <div class="admin-topbar-left">
+          <button class="sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
+          <div>
+            <h1><%= title %></h1>
+            <div class="breadcrumb">Admin / <%= title %></div>
+          </div>
+        </div>
+        <div class="admin-user">
+          <div class="admin-avatar">A</div>
+          <span>Admin</span>
+        </div>
+      </header>
+
+      <main class="admin-content">
