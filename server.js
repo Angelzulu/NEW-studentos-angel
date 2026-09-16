@@ -5,6 +5,15 @@ const fs           = require("fs");
 const session      = require("express-session");
 const flash        = require("connect-flash");
 
+// ── Validate required environment variables before starting ──────────────────
+if (process.env.NODE_ENV === "production") {
+  const required = ["SESSION_SECRET", "ADMIN_PASSWORD_HASH"];
+  const missing  = required.filter(k => !process.env[k]);
+  if (missing.length) {
+    throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+  }
+}
+
 const siteRoutes  = require("./routes/site");
 const adminRoutes = require("./routes/admin");
 const authRoutes  = require("./routes/auth");
@@ -39,6 +48,17 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
+// ── Security headers ─────────────────────────────────────────────────────────
+// Set X-Content-Type-Options, X-Frame-Options, etc. without pulling in helmet
+// (keeps dependencies lean). Add helmet later for a full CSP policy.
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
 // ── View engine ──────────────────────────────────────────────────────────────
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -50,9 +70,7 @@ app.use("/storage", express.static(path.join(__dirname, "storage")));
 
 // On Vercel, uploaded files go to /tmp — serve them via /tmp-files/:filename
 app.get("/tmp-files/:filename", (req, res) => {
-  const safe = path.basename(req.params.filename); // prevent path traversal
-  const filePath = path.join("/tmp/student-os-uploads", safe);
-  // Search all sub-folders under the tmp upload root
+  const safe    = path.basename(req.params.filename); // prevent path traversal
   const baseDir = "/tmp/student-os-uploads";
   let found = null;
   try {
@@ -61,7 +79,6 @@ app.get("/tmp-files/:filename", (req, res) => {
       const candidate = path.join(baseDir, sub, safe);
       if (fs.existsSync(candidate)) { found = candidate; break; }
     }
-    // Also check directly in baseDir
     const direct = path.join(baseDir, safe);
     if (!found && fs.existsSync(direct)) found = direct;
   } catch {}
@@ -73,9 +90,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // ── Sessions ─────────────────────────────────────────────────────────────────
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret && process.env.NODE_ENV === "production") {
+  throw new Error("SESSION_SECRET environment variable is required in production.");
+}
+
 app.use(session({
   name:   "studentos.sid",
-  secret: process.env.SESSION_SECRET || "change-me-in-production-use-env-var",
+  secret: sessionSecret || "dev-only-insecure-secret-change-in-production",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -123,6 +145,9 @@ app.listen(PORT, HOST, () => {
   console.log(`  On this PC:        http://localhost:${PORT}`);
   if (lanIP) {
     console.log(`  From your phone:   http://${lanIP}:${PORT}  (same Wi-Fi network)`);
+  }
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`\n  [dev] SESSION_SECRET not set — using insecure default. Set it in .env.`);
   }
 });
 

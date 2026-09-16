@@ -1,3 +1,23 @@
-node_modules/
+# Environment variables — NEVER commit real credentials
 .env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# Local storage (uploaded files)
+storage/
+
+# OS / editor
 .DS_Store
+*.swp
+*.swo
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+.write-test

@@ -9,17 +9,27 @@
  *
  * To add more accounts later, generate a hash with:
  *   node -e "require('bcryptjs').hash('YOUR_PASSWORD',12).then(h=>console.log(h))"
- * and add an entry to the array below.
+ * and set ADMIN_PASSWORD_HASH in your environment variables (never commit it).
  */
+
+if (!process.env.ADMIN_PASSWORD_HASH) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("ADMIN_PASSWORD_HASH environment variable is required in production.");
+  } else {
+    console.warn(
+      "[adminUsers] WARNING: ADMIN_PASSWORD_HASH is not set. " +
+      "Admin login will not work until you set this env var.\n" +
+      "Generate one with: node -e \"require('bcryptjs').hash('YOUR_PASSWORD',12).then(h=>console.log(h))\""
+    );
+  }
+}
 
 const ADMIN_USERS = [
   {
     id:           "1",
     username:     "angelzm",
-    // bcrypt hash of: angelzulu@2008
-    passwordHash: process.env.ADMIN_PASSWORD_HASH ||
-      "$2b$12$L0HVlsRMkupk5.KWz/zQP.26MELkxV.9vwuwna2W1Ge3U.VW31o4O",
-    role:         "owner",          // owner | staff
+    passwordHash: process.env.ADMIN_PASSWORD_HASH || "",
+    role:         "owner",   // owner | staff
     displayName:  "Angel",
   },
 ];

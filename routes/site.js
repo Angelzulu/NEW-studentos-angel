@@ -6,13 +6,14 @@ const fs      = require("fs");
 // Legacy in-memory data (grades, subjects etc.)
 const data  = require("../data/sampleData");
 // Persistent content store
-const store = require("../data/contentStore");
+const { materials: matStore, examInfo: examStore, announcements: announceStore } =
+  require("../data/contentStore");
 
 // ── Home ─────────────────────────────────────────────────────────────────────
 router.get("/", (req, res) => {
   res.render("index", {
     title:         "Home",
-    announcements: store.announcements.published().slice(0, 3),
+    announcements: announceStore.published().slice(0, 3),
   });
 });
 
@@ -30,12 +31,10 @@ router.get("/grade/:gradeId", (req, res) => {
 
   const gradeName = gradeDef.name; // e.g. "Grade 7"
 
-  // Only published materials that belong to this grade (or tagged for all grades)
-  const gradeMaterials = store.materials
+  const gradeMaterials = matStore
     .all()
     .filter(m => m.published && (m.grade === gradeName || m.grade === "All Grades"));
 
-  // Group into subject sections — only subjects that actually have content
   const bySubject = {};
   gradeMaterials.forEach(m => {
     const subject = (m.subject && m.subject.trim()) || "General";
@@ -47,7 +46,7 @@ router.get("/grade/:gradeId", (req, res) => {
     .sort((a, b) => a.localeCompare(b))
     .map(subject => ({
       subject,
-      count:         bySubject[subject].length,
+      count:          bySubject[subject].length,
       pastPaperCount: bySubject[subject].filter(m => m.materialType === "Past Paper").length,
     }));
 
@@ -60,7 +59,7 @@ router.get("/grade/:gradeId", (req, res) => {
   });
 });
 
-// ── Grade + Subject — past papers organized by year, e.g. Grade 12 → English ─
+// ── Grade + Subject ───────────────────────────────────────────────────────────
 router.get("/grade/:gradeId/:subject", (req, res) => {
   const gradeId  = req.params.gradeId;
   const gradeDef = data.grades.find(g => g.id === `grade-${gradeId}`);
@@ -69,8 +68,7 @@ router.get("/grade/:gradeId/:subject", (req, res) => {
   const gradeName   = gradeDef.name;
   const subjectName = req.params.subject;
 
-  // Only published materials that belong to this grade + subject
-  const subjectMaterials = store.materials
+  const subjectMaterials = matStore
     .all()
     .filter(m => m.published &&
       (m.grade === gradeName || m.grade === "All Grades") &&
@@ -80,10 +78,9 @@ router.get("/grade/:gradeId/:subject", (req, res) => {
     return res.status(404).render("404", { title: "Page Not Found" });
   }
 
-  const pastPapers = subjectMaterials.filter(m => m.materialType === "Past Paper");
+  const pastPapers     = subjectMaterials.filter(m => m.materialType === "Past Paper");
   const otherMaterials = subjectMaterials.filter(m => m.materialType !== "Past Paper");
 
-  // Group past papers by year, newest year first
   const byYear = {};
   pastPapers.forEach(m => {
     const year = m.year || "Undated";
@@ -111,7 +108,7 @@ router.get("/grade/:gradeId/:subject", (req, res) => {
 // ── Learning Materials — browseable list ─────────────────────────────────────
 router.get("/materials", (req, res) => {
   const { grade, subject, materialType, year, search } = req.query;
-  const filtered = store.materials.filter({ grade, subject, materialType, year, search });
+  const filtered = matStore.filter({ grade, subject, materialType, year, search });
   res.render("materials", {
     title:         "Learning Materials",
     materials:     filtered,
@@ -126,34 +123,40 @@ router.get("/materials", (req, res) => {
   });
 });
 
-// ── PDF Viewer — opens PDF inside Student OS ─────────────────────────────────
+// ── PDF Viewer ───────────────────────────────────────────────────────────────
 router.get("/materials/:id/view", (req, res) => {
-  const material = store.materials.findById(req.params.id);
+  const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
-  store.materials.incrementViews(req.params.id);
+  matStore.incrementViews(req.params.id);
   res.render("pdf-viewer", { title: material.title, material });
 });
 
 // ── PDF Download ──────────────────────────────────────────────────────────────
+// If the file is on R2 (or any external URL), redirect to it.
+// If it's a local path, send the file directly.
 router.get("/materials/:id/download", (req, res) => {
-  const material = store.materials.findById(req.params.id);
+  const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
 
+  matStore.incrementDownloads(req.params.id);
+
+  // External URL (R2 or CDN) — redirect to the file
+  if (material.filePath && material.filePath.startsWith("http")) {
+    return res.redirect(material.filePath);
+  }
+
+  // Local disk path
   const absPath = path.join(__dirname, "..", material.filePath);
   if (!fs.existsSync(absPath)) {
     return res.status(404).render("404", { title: "File Not Found" });
   }
-
-  store.materials.incrementDownloads(req.params.id);
   res.download(absPath, material.fileName || path.basename(absPath));
 });
 
-// ── Past Papers (legacy route — shows materials of type "Past Paper") ─────────
+// ── Past Papers ───────────────────────────────────────────────────────────────
 router.get("/papers", (req, res) => {
   const { grade, subject, year } = req.query;
-  const filtered = store.materials.filter({
-    grade, subject, year, materialType: "Past Paper",
-  });
+  const filtered = matStore.filter({ grade, subject, year, materialType: "Past Paper" });
   res.render("materials", {
     title:         "Past Papers",
     materials:     filtered,
@@ -174,13 +177,13 @@ router.get("/subjects", (req, res) => {
 router.get("/exams", (req, res) => {
   res.render("exams", {
     title:    "Exam Information",
-    examInfo: store.examInfo.published(),
+    examInfo: examStore.published(),
   });
 });
 
-// ── Resources (legacy alias → materials) ────────────────────────────────────
+// ── Resources ────────────────────────────────────────────────────────────────
 router.get("/resources", (req, res) => {
-  const filtered = store.materials.filter({});
+  const filtered = matStore.filter({});
   res.render("materials", {
     title:         "Resources",
     materials:     filtered,
@@ -195,16 +198,16 @@ router.get("/resources", (req, res) => {
   });
 });
 
-// ── Contact / About ──────────────────────────────────────────────────────────
+// ── Contact ───────────────────────────────────────────────────────────────────
 router.get("/contact", (req, res) => {
   res.render("contact", { title: "Contact" });
 });
 
-// ── Announcements (student-facing) ──────────────────────────────────────────
+// ── Announcements (student-facing) ───────────────────────────────────────────
 router.get("/announcements", (req, res) => {
   res.render("announcements", {
     title:         "Announcements",
-    announcements: store.announcements.published(),
+    announcements: announceStore.published(),
   });
 });
 

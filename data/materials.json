@@ -70,5 +70,24 @@
     "published": true,
     "views": 0,
     "downloads": 0
+  },
+  {
+    "id": 5,
+    "title": "math",
+    "description": "",
+    "grade": "Grade 12",
+    "subject": "",
+    "topic": "",
+    "term": "",
+    "year": "2022",
+    "materialType": "Past Paper",
+    "fileName": "solutions_grade12_mathematics_solutions_g12_maths_p2_2024.pdf",
+    "fileSize": "2.2 MB",
+    "filePath": "https://dash.cloudflare.com/545bae9df1e309d5dd81456bb1c5a12e/r2/default/buckets/studentos-pdfs/documents/past-papers/1789551001802_solutions_grade12_mathematics_solutions_g12_maths_p2_2024.pdf",
+    "r2Key": "documents/past-papers/1789551001802_solutions_grade12_mathematics_solutions_g12_maths_p2_2024.pdf",
+    "uploadDate": "2026-09-16T09:30:07.956Z",
+    "published": true,
+    "views": 0,
+    "downloads": 0
   }
 ]

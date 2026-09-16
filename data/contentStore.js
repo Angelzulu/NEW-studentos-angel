@@ -5,17 +5,17 @@
  * persists across restarts.
  *
  * On Vercel (read-only filesystem): falls back to in-memory storage
- * automatically. Content will reset on each cold start, but the app
- * will not crash. Use a real database (e.g. Vercel KV, Supabase, MongoDB
- * Atlas) when you need persistence in production.
+ * automatically. Content will reset on each cold start. Use a real database
+ * (e.g. Vercel KV, Supabase, MongoDB Atlas) when you need persistence in
+ * production.
  */
 
 const fs   = require("fs");
 const path = require("path");
 
 // ── Detect whether the filesystem is writable ───────────────────────────────
-const DATA_DIR       = path.join(__dirname);
-const IS_WRITABLE    = (() => {
+const DATA_DIR    = path.join(__dirname);
+const IS_WRITABLE = (() => {
   try {
     const probe = path.join(DATA_DIR, ".write-test");
     fs.writeFileSync(probe, "1", "utf8");
@@ -87,6 +87,7 @@ const materials = {
       fileName:     fields.fileName     || "",
       fileSize:     fields.fileSize     || "",
       filePath:     fields.filePath     || "",
+      r2Key:        fields.r2Key        || null,  // R2 object key for deletion
       uploadDate:   nowISO(),
       published:    true,
       views:        0,
@@ -104,7 +105,7 @@ const materials = {
     const allowed = ["title","description","grade","subject","topic","term","year","materialType","published"];
     allowed.forEach(k => { if (fields[k] !== undefined) list[idx][k] = fields[k]; });
     writeJSON(MATERIALS_FILE, "materials", list);
-    return list[idx];
+    return list[idx];  // fixed: was returning undefined `item`
   },
 
   remove(id) {
@@ -182,7 +183,7 @@ const examInfo = {
     if (fields.published !== undefined) list[idx].published = fields.published === "true" || fields.published === true;
     list[idx].updatedAt = nowISO();
     writeJSON(EXAM_INFO_FILE, "examInfo", list);
-    return list[idx];
+    return list[idx];  // fixed: was returning undefined `item`
   },
 
   remove(id) {
@@ -234,7 +235,7 @@ const announcements = {
     if (fields.published !== undefined) list[idx].published = fields.published === "true" || fields.published === true;
     list[idx].updatedAt = nowISO();
     writeJSON(ANNOUNCE_FILE, "announcements", list);
-    return item;
+    return list[idx];  // fixed: was returning undefined `item`
   },
 
   remove(id) {
@@ -251,4 +252,4 @@ const announcements = {
   },
 };
 
-module.exports = { materials, examInfo, announcements };
+module.exports = { materials, examInfo, announcements, IS_WRITABLE };
