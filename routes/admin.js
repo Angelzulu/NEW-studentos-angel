@@ -88,6 +88,50 @@ function safeName(originalName) {
   return originalName.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
+// Strip a trailing .pdf (any case) extension so a filename like
+// "2020 P1.pdf" becomes the title "2020 P1".
+function titleFromFilename(originalName) {
+  return originalName.replace(/\.pdf$/i, "").trim();
+}
+
+// ── Shared storage helper ────────────────────────────────────────────────────
+// Uploads a buffer to R2 (if configured) or falls back to local disk, and
+// returns the public-facing filePath plus the r2Key (if any) for later
+// deletion. Used by both the single-material form and the bulk Past Papers
+// uploader so the two stay in sync.
+async function storeFile(file, folder) {
+  const filename = Date.now() + "_" + Math.random().toString(36).slice(2, 8) + "_" + safeName(file.originalname);
+  let filePath, r2Key = null;
+
+  if (R2_CONFIGURED) {
+    r2Key    = `documents/${folder}/${filename}`;
+    filePath = `${R2_PUBLIC_URL}/${r2Key}`;
+
+    await r2.send(new PutObjectCommand({
+      Bucket:      R2_BUCKET,
+      Key:         r2Key,
+      Body:        file.buffer,
+      ContentType: "application/pdf",
+    }));
+  } else {
+    const STORAGE_ROOT = IS_WRITABLE
+      ? path.join(__dirname, "..", "storage", "documents")
+      : "/tmp/student-os-uploads";
+
+    const dest = path.join(STORAGE_ROOT, folder);
+    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+
+    const diskPath = path.join(dest, filename);
+    fs.writeFileSync(diskPath, file.buffer);
+
+    filePath = IS_WRITABLE
+      ? `/storage/documents/${folder}/${filename}`
+      : `/tmp-files/${filename}`;
+  }
+
+  return { filePath, r2Key };
+}
+
 // ── Dashboard ────────────────────────────────────────────────────────────────
 router.get("/", (req, res) => {
   const allMaterials = matStore.all();
@@ -176,37 +220,8 @@ router.post("/content/material", requireOwner, upload.single("pdfFile"), async (
       );
     }
 
-    const folder   = typeToFolder(materialType);
-    const filename = Date.now() + "_" + safeName(req.file.originalname);
-    let filePath, r2Key = null;
-
-    if (R2_CONFIGURED) {
-      // ── Upload to Cloudflare R2 ──────────────────────────────────────────
-      r2Key    = `documents/${folder}/${filename}`;
-      filePath = `${R2_PUBLIC_URL}/${r2Key}`;
-
-      await r2.send(new PutObjectCommand({
-        Bucket:      R2_BUCKET,
-        Key:         r2Key,
-        Body:        req.file.buffer,
-        ContentType: "application/pdf",
-      }));
-    } else {
-      // ── Local disk fallback (dev only) ───────────────────────────────────
-      const STORAGE_ROOT = IS_WRITABLE
-        ? path.join(__dirname, "..", "storage", "documents")
-        : "/tmp/student-os-uploads";
-
-      const dest = path.join(STORAGE_ROOT, folder);
-      if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
-
-      const diskPath = path.join(dest, filename);
-      fs.writeFileSync(diskPath, req.file.buffer);
-
-      filePath = IS_WRITABLE
-        ? `/storage/documents/${folder}/${filename}`
-        : `/tmp-files/${filename}`;
-    }
+    const folder = typeToFolder(materialType);
+    const { filePath, r2Key } = await storeFile(req.file, folder);
 
     matStore.add({
       title,
@@ -227,6 +242,54 @@ router.post("/content/material", requireOwner, upload.single("pdfFile"), async (
   } catch (err) {
     console.error("Upload error:", err);
     res.redirect("/admin/content?tab=materials&flash=error&flashMsg=" + encodeURIComponent(err.message));
+  }
+});
+
+// ── POST: Bulk Past Papers quick-upload (one PDF per request) ───────────────
+// Used by the "Quick Upload — Past Papers" panel in Admin → Content.
+// The client sends each selected PDF as its own request so it can show
+// per-file progress and success/error status. The title is always taken
+// from the PDF's filename — the caller never types a title.
+router.post("/content/material/quick", requireOwner, function (req, res, next) {
+  upload.single("pdfFile")(req, res, function (err) {
+    if (err) return res.status(400).json({ success: false, error: err.message || "Upload failed." });
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No PDF file received." });
+    }
+
+    const { grade, subject } = req.body;
+    if (!grade) {
+      return res.status(400).json({ success: false, error: "Grade is required." });
+    }
+
+    const materialType = "Past Paper";
+    const title  = titleFromFilename(req.file.originalname);
+    const folder = typeToFolder(materialType);
+    const { filePath, r2Key } = await storeFile(req.file, folder);
+
+    const item = matStore.add({
+      title,
+      description:  "",
+      grade,
+      subject:      subject || "",
+      topic:        "",
+      term:         "",
+      year:         "",
+      materialType,
+      fileName:     req.file.originalname,
+      fileSize:     formatBytes(req.file.size),
+      filePath,
+      r2Key,
+    });
+
+    res.json({ success: true, id: item.id, title: item.title, grade: item.grade, subject: item.subject });
+  } catch (err) {
+    console.error("Bulk past-paper upload error:", err);
+    res.status(500).json({ success: false, error: err.message || "Upload failed." });
   }
 });
 
