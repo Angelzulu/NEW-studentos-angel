@@ -20,11 +20,11 @@ const R2_CONFIGURED =
 const r2 = R2_CONFIGURED
   ? new S3Client({
       region:   "auto",
-      endpoint: process.env.R2_ENDPOINT,   // e.g. https://ACCOUNT_ID.r2.cloudflarestorage.com
+      endpoint: (process.env.R2_ENDPOINT || "").replace(/\s+/g, ""),
       forcePathStyle: true,                // recommended for R2 S3-compat endpoints
       credentials: {
-        accessKeyId:     process.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+        accessKeyId:     (process.env.R2_ACCESS_KEY_ID || "").replace(/\s+/g, ""),
+        secretAccessKey: (process.env.R2_SECRET_ACCESS_KEY || "").replace(/\s+/g, ""),
       },
     })
   : null;
