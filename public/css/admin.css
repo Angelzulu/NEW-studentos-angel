@@ -704,3 +704,102 @@
   color: var(--color-text-muted);
   border: 1px solid var(--color-border);
 }
+
+/* ── Bulk Past Papers uploader ───────────────────────────────────── */
+.bulk-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.bulk-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.bulk-file-icon { font-size: 20px; flex-shrink: 0; }
+
+.bulk-file-info { flex: 1 1 auto; min-width: 0; }
+.bulk-file-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bulk-file-meta {
+  font-size: 12px;
+  color: var(--color-text-faint);
+  margin-top: 2px;
+}
+
+.bulk-file-subject { flex: 0 0 180px; }
+.bulk-file-subject select,
+.bulk-file-subject input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  font-family: inherit;
+}
+.bulk-file-subject select:disabled,
+.bulk-file-subject input:disabled {
+  background: var(--color-bg);
+  color: var(--color-text-faint);
+  cursor: not-allowed;
+}
+
+.bulk-file-progress {
+  flex: 0 0 110px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+.bulk-file-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--color-primary);
+  transition: width 0.15s ease;
+}
+.bulk-file-row.is-success .bulk-file-progress-bar { background: #10b981; }
+.bulk-file-row.is-error   .bulk-file-progress-bar { background: #ef4444; }
+
+.bulk-file-status {
+  flex: 0 0 90px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+.bulk-file-status.status-pending  { color: var(--color-text-faint); }
+.bulk-file-status.status-uploading{ color: var(--color-primary); }
+.bulk-file-status.status-success  { color: #10b981; }
+.bulk-file-status.status-error    { color: #ef4444; cursor: help; }
+
+.bulk-file-remove {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  color: var(--color-text-faint);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.bulk-file-remove:hover { color: #ef4444; }
+
+.bulk-summary-line {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 10px;
+}

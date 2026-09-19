@@ -18,6 +18,70 @@
 ════════════════════════════════════════════ -->
 <div class="upload-panel <%= tab === 'materials' ? 'active' : '' %>" id="tab-materials">
 
+  <!-- ═══════════════════════════════════════════════════════════
+       Quick Upload — Past Papers (bulk, multi-file)
+  ════════════════════════════════════════════════════════════ -->
+  <div class="panel" id="bulkPastPapersPanel">
+    <div class="panel-head">
+      <h2>⚡ Quick Upload — Past Papers</h2>
+      <span class="panel-sub">Select as many PDFs as you like. Each file's name becomes its title automatically — no typing required. Choose a Grade and Subject once and apply it to every file, or set the Subject per file.</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="form-step">
+        <div class="form-step-label">Step 1 — Choose your PDFs <span class="req">*</span></div>
+        <div class="form-field">
+          <div class="pdf-upload-area" id="bulkUploadArea">
+            <span class="pdf-upload-icon">📚</span>
+            <span class="pdf-upload-label">Click to choose PDFs or drag &amp; drop here</span>
+            <span class="pdf-upload-hint">PDF only · max 50 MB each · select multiple at once</span>
+            <input type="file" id="bulkFileInput" accept="application/pdf" multiple class="pdf-upload-input">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-step" id="bulkSettingsStep" style="display:none;">
+        <div class="form-step-label">Step 2 — Grade &amp; Subject for this batch</div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="bulkGrade">Grade <span class="req">*</span></label>
+            <select id="bulkGrade">
+              <option value="">— Select grade —</option>
+              <% grades.forEach(function(g) { %><option value="<%= g.name %>"><%= g.name %></option><% }); %>
+              <option value="All Grades">All Grades</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="bulkSubject">Subject <span class="req">*</span></label>
+            <% if (subjects.length > 0) { %>
+              <select id="bulkSubject">
+                <option value="">— Select subject —</option>
+                <% subjects.forEach(function(s) { %><option value="<%= s.name %>"><%= s.name %></option><% }); %>
+              </select>
+            <% } else { %>
+              <input type="text" id="bulkSubject" placeholder="e.g. Mathematics">
+            <% } %>
+          </div>
+        </div>
+        <label class="toggle-label">
+          <input type="checkbox" id="bulkApplyAll" checked>
+          <span>Apply to all — use this Grade &amp; Subject for every file below</span>
+        </label>
+      </div>
+
+      <div class="form-step" id="bulkListStep" style="display:none;">
+        <div class="form-step-label">Step 3 — Files to upload (<span id="bulkFileCount">0</span>)</div>
+        <div id="bulkFileList" class="bulk-file-list"></div>
+      </div>
+
+      <div class="form-actions" id="bulkActionsRow" style="display:none;">
+        <button type="button" class="btn btn-secondary" id="bulkClearBtn">Clear all</button>
+        <button type="button" class="btn btn-primary" id="bulkUploadBtn">Upload All</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Upload form -->
   <div class="panel">
     <div class="panel-head">
@@ -200,7 +264,7 @@
                     </span>
                   </td>
                   <td class="actions-cell">
-                    <a href="<%= m.filePath %>" target="_blank" class="btn-xs btn-outline">Preview</a>
+                    <a href="/materials/<%= m.id %>/view" target="_blank" class="btn-xs btn-outline">Preview</a>
                     <form method="POST" action="/admin/content/material/<%= m.id %>/toggle" style="display:inline">
                       <button class="btn-xs <%= m.published ? 'btn-warning' : 'btn-success' %>">
                         <%= m.published ? 'Unpublish' : 'Publish' %>
@@ -372,6 +436,247 @@
       showChosen(file);
     }
   });
+})();
+
+// ── Quick Upload — Past Papers (bulk multi-file) ──────────────────────────────
+(function () {
+  const SUBJECTS = <%- JSON.stringify(subjects.map(s => s.name)) %>;
+
+  const area        = document.getElementById("bulkUploadArea");
+  const input       = document.getElementById("bulkFileInput");
+  const settingsStep= document.getElementById("bulkSettingsStep");
+  const listStep    = document.getElementById("bulkListStep");
+  const actionsRow  = document.getElementById("bulkActionsRow");
+  const fileListEl  = document.getElementById("bulkFileList");
+  const fileCountEl = document.getElementById("bulkFileCount");
+  const gradeSel    = document.getElementById("bulkGrade");
+  const subjectSel  = document.getElementById("bulkSubject");
+  const applyAllChk = document.getElementById("bulkApplyAll");
+  const uploadBtn   = document.getElementById("bulkUploadBtn");
+  const clearBtn    = document.getElementById("bulkClearBtn");
+
+  if (!area || !input) return;
+
+  // Each entry: { id, file, subjectEl, rowEl, progressBar, statusEl, status }
+  let entries = [];
+  let nextEntryId = 1;
+  let uploading = false;
+
+  function formatBytes(bytes) {
+    if (!bytes) return "—";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  }
+
+  function titleFromFilename(name) {
+    return name.replace(/\.pdf$/i, "").trim();
+  }
+
+  function buildSubjectField(entryId) {
+    if (SUBJECTS.length > 0) {
+      const opts = ['<option value="">— Select —</option>']
+        .concat(SUBJECTS.map(s => `<option value="${s}">${s}</option>`))
+        .join("");
+      return `<select class="row-subject" data-entry="${entryId}">${opts}</select>`;
+    }
+    return `<input type="text" class="row-subject" data-entry="${entryId}" placeholder="Subject">`;
+  }
+
+  function render() {
+    fileCountEl.textContent = entries.length;
+    const hasFiles = entries.length > 0;
+    settingsStep.style.display = hasFiles ? "" : "none";
+    listStep.style.display     = hasFiles ? "" : "none";
+    actionsRow.style.display   = hasFiles ? "" : "none";
+
+    fileListEl.innerHTML = entries.map(function (entry) {
+      return `
+        <div class="bulk-file-row" data-entry="${entry.id}">
+          <span class="bulk-file-icon">📄</span>
+          <div class="bulk-file-info">
+            <div class="bulk-file-title">${entry.title}</div>
+            <div class="bulk-file-meta">${entry.file.name} · ${formatBytes(entry.file.size)}</div>
+          </div>
+          <div class="bulk-file-subject">${buildSubjectField(entry.id)}</div>
+          <div class="bulk-file-progress"><div class="bulk-file-progress-bar"></div></div>
+          <div class="bulk-file-status status-pending">Pending</div>
+          <button type="button" class="bulk-file-remove" data-remove="${entry.id}" title="Remove">✕</button>
+        </div>`;
+    }).join("");
+
+    // Wire up per-row elements + restore subject value + apply-all state
+    entries.forEach(function (entry) {
+      const rowEl = fileListEl.querySelector('[data-entry="' + entry.id + '"]');
+      entry.rowEl        = rowEl;
+      entry.subjectEl    = rowEl.querySelector(".row-subject");
+      entry.progressBar  = rowEl.querySelector(".bulk-file-progress-bar");
+      entry.statusEl     = rowEl.querySelector(".bulk-file-status");
+      entry.removeBtn    = rowEl.querySelector(".bulk-file-remove");
+
+      entry.subjectEl.value = entry.subject || subjectSel.value || "";
+      entry.subjectEl.disabled = applyAllChk.checked;
+      entry.subjectEl.addEventListener("change", function () {
+        entry.subject = this.value;
+      });
+      entry.removeBtn.addEventListener("click", function () {
+        if (uploading) return;
+        entries = entries.filter(e => e.id !== entry.id);
+        render();
+      });
+    });
+  }
+
+  function addFiles(fileList) {
+    Array.from(fileList).forEach(function (file) {
+      if (file.type !== "application/pdf") return;
+      // Skip exact duplicates (same name + size) already queued
+      if (entries.some(e => e.file.name === file.name && e.file.size === file.size)) return;
+      entries.push({
+        id:      nextEntryId++,
+        file:    file,
+        title:   titleFromFilename(file.name),
+        subject: subjectSel ? subjectSel.value : "",
+        status:  "pending",
+      });
+    });
+    render();
+  }
+
+  area.addEventListener("click", () => input.click());
+  input.addEventListener("change", function () {
+    addFiles(this.files);
+    input.value = ""; // allow re-selecting the same files later
+  });
+
+  area.addEventListener("dragover", e => { e.preventDefault(); area.classList.add("drag-over"); });
+  area.addEventListener("dragleave", () => area.classList.remove("drag-over"));
+  area.addEventListener("drop", e => {
+    e.preventDefault();
+    area.classList.remove("drag-over");
+    if (e.dataTransfer.files && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
+  });
+
+  applyAllChk.addEventListener("change", function () {
+    entries.forEach(function (entry) {
+      entry.subjectEl.disabled = applyAllChk.checked;
+      if (applyAllChk.checked) {
+        entry.subject = subjectSel.value;
+        entry.subjectEl.value = subjectSel.value;
+      }
+    });
+  });
+
+  subjectSel.addEventListener("change", function () {
+    if (!applyAllChk.checked) return;
+    entries.forEach(function (entry) {
+      entry.subject = subjectSel.value;
+      entry.subjectEl.value = subjectSel.value;
+    });
+  });
+
+  clearBtn.addEventListener("click", function () {
+    if (uploading) return;
+    entries = [];
+    render();
+  });
+
+  function setRowStatus(entry, status, message) {
+    entry.status = status;
+    entry.rowEl.classList.remove("is-success", "is-error");
+    entry.statusEl.classList.remove("status-pending", "status-uploading", "status-success", "status-error");
+
+    if (status === "uploading") {
+      entry.statusEl.textContent = "Uploading…";
+      entry.statusEl.classList.add("status-uploading");
+    } else if (status === "success") {
+      entry.rowEl.classList.add("is-success");
+      entry.progressBar.style.width = "100%";
+      entry.statusEl.textContent = "✅ Done";
+      entry.statusEl.classList.add("status-success");
+    } else if (status === "error") {
+      entry.rowEl.classList.add("is-error");
+      entry.statusEl.textContent = "❌ Failed";
+      entry.statusEl.classList.add("status-error");
+      entry.statusEl.title = message || "Upload failed";
+    } else {
+      entry.statusEl.textContent = "Pending";
+      entry.statusEl.classList.add("status-pending");
+    }
+  }
+
+  function uploadOne(entry, grade) {
+    return new Promise(function (resolve) {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/admin/content/material/quick");
+      xhr.setRequestHeader("Accept", "application/json");
+
+      xhr.upload.addEventListener("progress", function (e) {
+        if (e.lengthComputable) {
+          entry.progressBar.style.width = Math.round((e.loaded / e.total) * 100) + "%";
+        }
+      });
+
+      xhr.onload = function () {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch (e) {}
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          setRowStatus(entry, "success");
+        } else {
+          setRowStatus(entry, "error", data.error || ("Server error (" + xhr.status + ")"));
+        }
+        resolve();
+      };
+      xhr.onerror = function () {
+        setRowStatus(entry, "error", "Network error");
+        resolve();
+      };
+
+      const fd = new FormData();
+      fd.append("pdfFile", entry.file);
+      fd.append("grade", grade);
+      fd.append("subject", entry.subject || "");
+
+      setRowStatus(entry, "uploading");
+      xhr.send(fd);
+    });
+  }
+
+  uploadBtn.addEventListener("click", async function () {
+    if (uploading) return;
+    const grade = gradeSel.value;
+    if (!grade) { alert("Please choose a Grade for this batch."); return; }
+    if (applyAllChk.checked && !subjectSel.value) { alert("Please choose a Subject, or untick 'Apply to all' to set it per file."); return; }
+
+    const pending = entries.filter(e => e.status !== "success");
+    if (!pending.length) return;
+
+    uploading = true;
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "Uploading…";
+    clearBtn.disabled = true;
+
+    // Upload sequentially to keep things simple and easy to follow on screen.
+    for (const entry of pending) {
+      await uploadOne(entry, grade);
+    }
+
+    uploading = false;
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = "Upload All";
+    clearBtn.disabled = false;
+
+    const successCount = entries.filter(e => e.status === "success").length;
+    const errorCount   = entries.filter(e => e.status === "error").length;
+
+    if (errorCount === 0) {
+      // Reload so the freshly uploaded papers show up in the table below
+      // and on the public site's Grade → Subject pages right away.
+      setTimeout(() => { window.location.href = "/admin/content?tab=materials&flash=success&flashMsg=" + successCount + "+past+paper(s)+uploaded."; }, 500);
+    }
+  });
+
+  render();
 })();
 
 // ── Client-side table filter ──────────────────────────────────────────────────

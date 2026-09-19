@@ -8,6 +8,17 @@ const data  = require("../data/sampleData");
 // Persistent content store
 const { materials: matStore, examInfo: examStore, announcements: announceStore } =
   require("../data/contentStore");
+// Read-only R2 client, used only for streaming PDFs to the viewer/download —
+// see utils/r2.js for why this exists (R2_PUBLIC_URL is misconfigured).
+const { R2_CONFIGURED, streamR2Object } = require("../utils/r2");
+
+// A material was uploaded to R2 if it has an r2Key. Its stored filePath may
+// be a broken link (built from the misconfigured R2_PUBLIC_URL), so for these
+// we always stream the object ourselves instead of trusting/redirecting to
+// filePath.
+function isR2Material(material) {
+  return !!(material && material.r2Key && R2_CONFIGURED);
+}
 
 // ── Home ─────────────────────────────────────────────────────────────────────
 router.get("/", (req, res) => {
@@ -128,21 +139,58 @@ router.get("/materials/:id/view", (req, res) => {
   const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
   matStore.incrementViews(req.params.id);
-  res.render("pdf-viewer", { title: material.title, material });
+
+  // R2-backed files: embed our own streaming proxy (works regardless of
+  // R2_PUBLIC_URL/bucket public-access config). Local files: keep serving
+  // straight from /storage as before.
+  const viewUrl = isR2Material(material)
+    ? `/materials/${material.id}/raw`
+    : material.filePath;
+
+  res.render("pdf-viewer", { title: material.title, material, viewUrl });
+});
+
+// ── PDF Raw stream (R2-backed files only) ─────────────────────────────────────
+// Streams the object straight from R2 using our authenticated client, so the
+// browser <iframe> always gets the actual PDF bytes instead of a broken link.
+router.get("/materials/:id/raw", async (req, res) => {
+  const material = matStore.findById(req.params.id);
+  if (!material) return res.status(404).render("404", { title: "Page Not Found" });
+
+  if (!isR2Material(material)) {
+    return res.status(404).render("404", { title: "File Not Found" });
+  }
+
+  try {
+    await streamR2Object(material.r2Key, res, {
+      filename: material.fileName || "document.pdf",
+      disposition: "inline",
+    });
+  } catch (e) {
+    console.error("R2 stream error (view):", e);
+    res.status(502).render("404", { title: "File Not Found" });
+  }
 });
 
 // ── PDF Download ──────────────────────────────────────────────────────────────
-// If the file is on R2 (or any external URL), redirect to it.
-// If it's a local path, send the file directly.
-router.get("/materials/:id/download", (req, res) => {
+// R2-backed files: stream from R2 directly (bypasses the broken
+// R2_PUBLIC_URL). Local files: send the file directly, as before.
+router.get("/materials/:id/download", async (req, res) => {
   const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
 
   matStore.incrementDownloads(req.params.id);
 
-  // External URL (R2 or CDN) — redirect to the file
-  if (material.filePath && material.filePath.startsWith("http")) {
-    return res.redirect(material.filePath);
+  if (isR2Material(material)) {
+    try {
+      return await streamR2Object(material.r2Key, res, {
+        filename: material.fileName || path.basename(material.filePath || "document.pdf"),
+        disposition: "attachment",
+      });
+    } catch (e) {
+      console.error("R2 stream error (download):", e);
+      return res.status(502).render("404", { title: "File Not Found" });
+    }
   }
 
   // Local disk path

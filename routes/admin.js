@@ -21,7 +21,13 @@ const r2 = R2_CONFIGURED
   ? new S3Client({
       region:   "auto",
       endpoint: (process.env.R2_ENDPOINT || "").replace(/\s+/g, ""),
-      forcePathStyle: true,                // recommended for R2 S3-compat endpoints
+      // R2 uses virtual-hosted-style: bucket name goes in the Host header, not
+      // the URL path.  forcePathStyle: true (the old comment said "recommended
+      // for R2" — this is incorrect) prepends the bucket name to every key in
+      // the request path, which works for PutObject by accident (R2 strips the
+      // leading bucket segment) but silently stores the object under a key that
+      // differs from what we saved in r2Key, causing NoSuchKey on GetObject.
+      // Removed so both upload and download use the same key format.
       credentials: {
         accessKeyId:     (process.env.R2_ACCESS_KEY_ID || "").replace(/\s+/g, ""),
         secretAccessKey: (process.env.R2_SECRET_ACCESS_KEY || "").replace(/\s+/g, ""),
