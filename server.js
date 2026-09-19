@@ -17,6 +17,7 @@ if (process.env.NODE_ENV === "production") {
 const siteRoutes  = require("./routes/site");
 const adminRoutes = require("./routes/admin");
 const authRoutes  = require("./routes/auth");
+const { SITE_URL, DEFAULT_META_DESCRIPTION } = require("./config/seo");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -115,6 +116,14 @@ app.use(flash());
 app.use((req, res, next) => {
   res.locals.siteName    = "Student OS";
   res.locals.currentPath = req.path;
+
+  // ── SEO defaults (safe fallbacks; routes override these as needed) ────────
+  // Any route can pass its own `metaTitle` / `metaDescription` / `canonicalUrl`
+  // / `robotsMeta` to res.render(...) and it will take precedence over these.
+  res.locals.siteUrl         = SITE_URL;
+  res.locals.metaDescription = DEFAULT_META_DESCRIPTION;
+  res.locals.canonicalUrl    = SITE_URL + req.path; // query strings stripped on purpose
+  res.locals.robotsMeta      = null; // e.g. "noindex, nofollow" for admin/404
   next();
 });
 
@@ -125,7 +134,11 @@ app.use("/admin", adminRoutes);  // all other admin routes (protected inside)
 
 // ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  res.status(404).render("404", { title: "Page Not Found" });
+  res.status(404).render("404", {
+    title:       "Page Not Found",
+    metaTitle:   "Page Not Found | Student OS",
+    robotsMeta:  "noindex, nofollow",
+  });
 });
 
 // ── Detect local IP for phone access ─────────────────────────────────────────

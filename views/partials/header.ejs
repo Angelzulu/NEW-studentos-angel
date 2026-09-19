@@ -3,8 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= title %> | <%= siteName %></title>
-  <meta name="description" content="Student OS - past papers, exam information and study resources for Zambian students." />
+
+  <% var pageTitle = (typeof metaTitle !== 'undefined' && metaTitle) ? metaTitle : (title + ' | ' + siteName); %>
+  <% var pageDesc  = (typeof metaDescription !== 'undefined' && metaDescription) ? metaDescription : ('Student OS - past papers, exam information and study resources for Zambian students.'); %>
+  <% var pageUrl   = (typeof canonicalUrl !== 'undefined' && canonicalUrl) ? canonicalUrl : (typeof siteUrl !== 'undefined' ? siteUrl + currentPath : undefined); %>
+
+  <title><%= pageTitle %></title>
+  <meta name="description" content="<%= pageDesc %>" />
+  <% if (typeof robotsMeta !== 'undefined' && robotsMeta) { %>
+    <meta name="robots" content="<%= robotsMeta %>" />
+  <% } %>
+  <% if (pageUrl) { %>
+    <link rel="canonical" href="<%= pageUrl %>" />
+  <% } %>
+
+  <!-- Open Graph (social sharing / rich previews — same info as above) -->
+  <meta property="og:site_name" content="<%= siteName %>" />
+  <meta property="og:title" content="<%= pageTitle %>" />
+  <meta property="og:description" content="<%= pageDesc %>" />
+  <meta property="og:type" content="website" />
+  <% if (pageUrl) { %><meta property="og:url" content="<%= pageUrl %>" /><% } %>
+
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
