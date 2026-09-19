@@ -57,11 +57,26 @@ const R2_BUCKET = process.env.R2_BUCKET_NAME || null;
 /**
  * Stream an R2 object straight to an Express response.
  * disposition: "inline" (for the in-browser viewer) or "attachment" (download).
+ *
+ * Throws an error whose .statusCode is 404 when the object does not exist in
+ * the bucket (R2 returns NoSuchKey), so the caller can distinguish a missing
+ * file from a genuine server error and show the right HTTP status.
  */
 async function streamR2Object(key, res, { filename = "document.pdf", disposition = "inline" } = {}) {
   if (!R2_CONFIGURED) throw new Error("R2 is not configured (missing env vars).");
 
-  const result = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+  let result;
+  try {
+    result = await r2.send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+  } catch (err) {
+    // R2 / S3 raises NoSuchKey when the object does not exist in the bucket.
+    if (err.name === "NoSuchKey" || err.$metadata?.httpStatusCode === 404) {
+      const notFound = new Error(`PDF not found in storage (key: ${key})`);
+      notFound.statusCode = 404;
+      throw notFound;
+    }
+    throw err; // re-throw any other error (auth, network, etc.)
+  }
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `${disposition}; filename="${filename.replace(/"/g, "")}"`);

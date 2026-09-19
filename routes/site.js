@@ -222,8 +222,11 @@ router.get("/materials/:id/raw", async (req, res) => {
       disposition: "inline",
     });
   } catch (e) {
-    console.error("R2 stream error (view):", e);
-    res.status(502).render("404", { title: "File Not Found" });
+    const status = e.statusCode === 404 ? 404 : 502;
+    console.error(`R2 stream error (view) [${status}]:`, e.message);
+    res.status(status).render("404", {
+      title: status === 404 ? "File Not Found" : "Storage Error",
+    });
   }
 });
 
@@ -243,8 +246,11 @@ router.get("/materials/:id/download", async (req, res) => {
         disposition: "attachment",
       });
     } catch (e) {
-      console.error("R2 stream error (download):", e);
-      return res.status(502).render("404", { title: "File Not Found" });
+      const status = e.statusCode === 404 ? 404 : 502;
+      console.error(`R2 stream error (download) [${status}]:`, e.message);
+      return res.status(status).render("404", {
+        title: status === 404 ? "File Not Found" : "Storage Error",
+      });
     }
   }
 

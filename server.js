@@ -14,6 +14,20 @@ if (process.env.NODE_ENV === "production") {
   }
 }
 
+// Warn at startup if R2 is not configured — PDFs uploaded without R2 will be
+// lost on Render's ephemeral filesystem.  This is not fatal so the app can
+// still start in dev without R2 credentials.
+const R2_VARS = ["R2_ENDPOINT", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET_NAME"];
+const missingR2 = R2_VARS.filter(k => !process.env[k]);
+if (missingR2.length) {
+  console.warn(
+    `[startup] WARNING: R2 not fully configured — missing: ${missingR2.join(", ")}. ` +
+    `PDFs will be stored on the local filesystem and will be lost on Render restarts.`
+  );
+} else {
+  console.log("[startup] R2 storage configured — PDFs will be stored in Cloudflare R2.");
+}
+
 const siteRoutes  = require("./routes/site");
 const adminRoutes = require("./routes/admin");
 const authRoutes  = require("./routes/auth");
