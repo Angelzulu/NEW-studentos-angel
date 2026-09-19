@@ -319,6 +319,58 @@ router.post("/content/material/:id/delete", requireOwner, async (req, res) => {
   res.redirect("/admin/content?tab=materials&flash=success&flashMsg=Material+deleted.");
 });
 
+// ── POST: Bulk-delete materials ───────────────────────────────────────────────
+// Expects JSON body: { ids: [1, 2, 3] }
+// Returns JSON: { deleted: [...], failed: [...] }
+router.post("/content/material/bulk-delete", requireOwner, express.json(), async (req, res) => {
+  const raw = req.body && req.body.ids;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return res.status(400).json({ ok: false, error: "No IDs provided." });
+  }
+
+  // Sanitise: coerce to integers, drop anything that isn't a positive number
+  const ids = raw.map(id => parseInt(id, 10)).filter(id => Number.isFinite(id) && id > 0);
+  if (ids.length === 0) {
+    return res.status(400).json({ ok: false, error: "No valid IDs provided." });
+  }
+
+  const deleted = [];
+  const failed  = [];
+
+  for (const id of ids) {
+    const item = matStore.remove(id);
+    if (!item) {
+      // Already gone — treat as success (idempotent)
+      deleted.push({ id, title: null, note: "not found" });
+      continue;
+    }
+
+    let r2Error = null;
+    if (item.r2Key && R2_CONFIGURED) {
+      try {
+        await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: item.r2Key }));
+      } catch (e) {
+        // R2 file missing or other error — record but don't abort the batch
+        r2Error = e.message || "R2 delete failed";
+        console.error(`[bulk-delete] R2 error for id=${id} key=${item.r2Key}:`, e);
+      }
+    } else if (item.filePath && !item.filePath.startsWith("http")) {
+      // Local disk fallback
+      const absPath = path.join(__dirname, "..", item.filePath);
+      try { if (fs.existsSync(absPath)) fs.unlinkSync(absPath); } catch {}
+    }
+
+    if (r2Error) {
+      // DB record removed, but R2 object could not be deleted
+      failed.push({ id, title: item.title, error: r2Error });
+    } else {
+      deleted.push({ id, title: item.title });
+    }
+  }
+
+  return res.json({ ok: true, deleted, failed });
+});
+
 // ── POST: Toggle publish status of a material ────────────────────────────────
 router.post("/content/material/:id/toggle", requireOwner, (req, res) => {
   const item = matStore.findById(req.params.id);
