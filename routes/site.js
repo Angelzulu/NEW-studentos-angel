@@ -6,8 +6,10 @@ const fs      = require("fs");
 // Legacy in-memory data (grades, subjects etc.)
 const data  = require("../data/sampleData");
 // Persistent content store
-const { materials: matStore, examInfo: examStore, announcements: announceStore } =
-  require("../data/contentStore");
+const {
+  materials: matStore, examInfo: examStore, announcements: announceStore,
+  extractYear, sortPastPapers,
+} = require("../data/contentStore");
 // Read-only R2 client, used only for streaming PDFs to the viewer/download —
 // see utils/r2.js for why this exists (R2_PUBLIC_URL is misconfigured).
 const { R2_CONFIGURED, streamR2Object } = require("../utils/r2");
@@ -92,9 +94,12 @@ router.get("/grade/:gradeId/:subject", (req, res) => {
   const pastPapers     = subjectMaterials.filter(m => m.materialType === "Past Paper");
   const otherMaterials = subjectMaterials.filter(m => m.materialType !== "Past Paper");
 
+  // Group by year — using extractYear() rather than the raw `year` field,
+  // since bulk-uploaded past papers never set `year` and only carry it
+  // inside the title (e.g. "2021 P2 GCE").
   const byYear = {};
   pastPapers.forEach(m => {
-    const year = m.year || "Undated";
+    const year = extractYear(m) || "Undated";
     if (!byYear[year]) byYear[year] = [];
     byYear[year].push(m);
   });
@@ -103,7 +108,8 @@ router.get("/grade/:gradeId/:subject", (req, res) => {
     .sort((a, b) => (parseInt(b, 10) || 0) - (parseInt(a, 10) || 0))
     .map(year => ({
       year,
-      papers: byYear[year].sort((a, b) => a.title.localeCompare(b.title)),
+      // Within a year, order by paper number (P1, P2, P3...).
+      papers: sortPastPapers(byYear[year]),
     }));
 
   res.render("grade-subject", {

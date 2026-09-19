@@ -62,6 +62,53 @@ function nowISO() {
   return new Date().toISOString();
 }
 
+// Work out a past paper's year. Prefers the explicit `year` field, but
+// most past papers come from the "Quick Upload" bulk flow, which never
+// sets `year` — it only sets `title` from the PDF's file name (e.g.
+// "2021 P2 GCE"). So when `year` is blank/non-numeric, fall back to
+// scanning the title for a 19xx/20xx year. Returns null when neither
+// source has one, so those items can be pushed to the end.
+function extractYear(material) {
+  const explicit = parseInt(material.year, 10);
+  if (Number.isFinite(explicit)) return explicit;
+  const match = String(material.title || "").match(/\b(19|20)\d{2}\b/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
+// Work out a past paper's paper number (1, 2, 3, ...) by scanning the
+// title for patterns like "P1", "P.2", "Paper 3". Returns null when no
+// paper number can be found, so those items sort after numbered ones.
+function extractPaperNumber(material) {
+  const match = String(material.title || "").match(/\bP(?:aper)?\.?\s*(\d+)\b/i);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+// Sort past papers newest year first; within the same year, by paper
+// number ascending (P1, P2, P3, ...). Anything undated or unnumbered
+// sorts after its dated/numbered peers, with title as the final,
+// stable tiebreaker.
+function sortPastPapers(list) {
+  return [...list].sort((a, b) => {
+    const yearA = extractYear(a);
+    const yearB = extractYear(b);
+    if (yearA !== yearB) {
+      if (yearA === null) return 1;
+      if (yearB === null) return -1;
+      return yearB - yearA;
+    }
+
+    const paperA = extractPaperNumber(a);
+    const paperB = extractPaperNumber(b);
+    if (paperA !== paperB) {
+      if (paperA === null) return 1;
+      if (paperB === null) return -1;
+      return paperA - paperB;
+    }
+
+    return String(a.title || "").localeCompare(String(b.title || ""));
+  });
+}
+
 // ── Learning Materials (PDFs) ───────────────────────────────────────────────
 const materials = {
   all() {
@@ -142,6 +189,11 @@ const materials = {
         m.subject.toLowerCase().includes(q) ||
         m.topic.toLowerCase().includes(q)
       );
+    }
+    // Past papers are always shown newest year first, then by paper
+    // number (P1, P2, P3...) within a year — regardless of upload order.
+    if (materialType === "Past Paper") {
+      list = sortPastPapers(list);
     }
     return list;
   },
@@ -252,4 +304,9 @@ const announcements = {
   },
 };
 
-module.exports = { materials, examInfo, announcements, IS_WRITABLE };
+module.exports = {
+  materials, examInfo, announcements, IS_WRITABLE,
+  // Shared past-paper sorting helpers (also used by routes/site.js for
+  // the grade/subject "grouped by year" view).
+  extractYear, extractPaperNumber, sortPastPapers,
+};
