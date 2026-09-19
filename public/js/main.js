@@ -8,7 +8,29 @@ document.addEventListener("DOMContentLoaded", function () {
   if (navToggle && mainNav) {
     navToggle.addEventListener("click", function () {
       mainNav.classList.toggle("open");
+      navToggle.classList.toggle("is-open");
     });
+  }
+
+  // Subtle reveal-on-scroll for card grids (student pages only).
+  // Respects prefers-reduced-motion and degrades to "just show everything"
+  // if IntersectionObserver isn't available.
+  var prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var revealTargets = document.querySelectorAll(".card, .material-card, .announce-item");
+
+  if (revealTargets.length && !prefersReducedMotion && "IntersectionObserver" in window) {
+    revealTargets.forEach(function (el) { el.classList.add("reveal-on-scroll"); });
+
+    var revealObserver = new IntersectionObserver(function (entries, observer) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+
+    revealTargets.forEach(function (el) { revealObserver.observe(el); });
   }
 
   // Auto-submit filter selects on the Past Papers page

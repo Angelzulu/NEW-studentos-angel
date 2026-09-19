@@ -15,7 +15,7 @@
   <div class="container">
     <% if (subjects.length === 0) { %>
       <div class="empty-state site-empty-state">
-        <div class="empty-icon">&#128218;</div>
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
         <p class="empty-title">Subjects are being added.</p>
         <p class="empty-sub">Check back soon — content is being uploaded to the platform.</p>
       </div>
@@ -23,7 +23,7 @@
       <div class="card-grid">
         <% subjects.forEach(function(subject) { %>
           <a class="card subject-card" href="/papers?subject=<%= encodeURIComponent(subject.name) %>">
-            <div class="subject-icon">&#128218;</div>
+            <div class="subject-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
             <h3><%= subject.name %></h3>
             <div class="subject-meta"><%= subject.grade %></div>
             <div class="subject-footer">

@@ -33,6 +33,87 @@
   --max-width: 1200px;
 }
 
+/* ==========================================================================
+   Student OS — student-facing design system
+   Scoped entirely to body.site-body (the public/student templates). The
+   admin panel uses body.admin-body and never receives these tokens, since
+   CSS custom properties only cascade to descendants of the element that
+   sets them. This lets the student pages get a distinct look while every
+   shared component (.btn, .badge, .brand, .empty-state, etc.) keeps the
+   admin panel's original values untouched.
+   ========================================================================== */
+body.site-body {
+  --color-primary: #5b7cfa;
+  --color-primary-dark: #3f5eea;
+  --color-primary-light: rgba(91, 124, 250, 0.14);
+  --color-accent: #a855f7;
+  --color-accent-light: rgba(168, 85, 247, 0.14);
+
+  --color-bg: #08080f;
+  --color-surface: #121220;
+  --color-surface-2: #191928;
+  --color-border: #24243c;
+  --color-border-strong: #35355a;
+  --color-text: #f4f4fb;
+  --color-text-muted: #9a9bbb;
+  --color-text-faint: #62637e;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  --glow-blue: 0 0 0 1px rgba(91, 124, 250, 0.35), 0 12px 36px -10px rgba(91, 124, 250, 0.45);
+  --glow-purple: 0 0 0 1px rgba(168, 85, 247, 0.3), 0 12px 36px -10px rgba(168, 85, 247, 0.4);
+  --gradient-brand: linear-gradient(135deg, #5b7cfa 0%, #a855f7 100%);
+  --gradient-brand-soft: linear-gradient(135deg, rgba(91, 124, 250, 0.16), rgba(168, 85, 247, 0.12));
+
+  --font-display: "Space Grotesk", "Inter", -apple-system, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+
+  background: var(--color-bg);
+  font-family: var(--font-body);
+}
+
+body.site-body h1,
+body.site-body h2,
+body.site-body h3,
+body.site-body .brand-name,
+body.site-body .grade-choice-number,
+body.site-body .grade-hero-badge,
+body.site-body .subject-icon,
+body.site-body .about-founder-name {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.site-body * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes site-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes site-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91, 124, 250, 0.35); }
+  50%      { box-shadow: 0 0 22px 4px rgba(91, 124, 250, 0.22); }
+}
+
+body.site-body .reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+body.site-body .reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -133,6 +214,25 @@ input, select, textarea {
 .btn-sm {
   padding: 6px 12px;
   font-size: 13px;
+}
+
+body.site-body .btn {
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+body.site-body .btn-primary {
+  background: var(--gradient-brand);
+  box-shadow: 0 4px 16px -4px rgba(91, 124, 250, 0.55);
+}
+
+body.site-body .btn-primary:hover {
+  box-shadow: 0 6px 22px -4px rgba(91, 124, 250, 0.7);
+  transform: translateY(-1px);
+}
+
+body.site-body .btn-outline:hover,
+body.site-body .btn-secondary:hover {
+  transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -267,6 +367,77 @@ input, select, textarea {
   color: var(--color-text);
 }
 
+body.site-body .site-header {
+  background: rgba(18, 18, 32, 0.72);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid var(--color-border);
+}
+
+body.site-body .brand-mark {
+  background: var(--gradient-brand);
+  box-shadow: 0 4px 18px -4px rgba(91, 124, 250, 0.55);
+}
+
+body.site-body .brand-name span {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body.site-body .main-nav a {
+  position: relative;
+}
+
+body.site-body .main-nav a.active {
+  background: var(--gradient-brand-soft);
+}
+
+body.site-body .main-nav a.active::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--gradient-brand);
+}
+
+body.site-body .nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+}
+
+body.site-body .nav-toggle:hover {
+  background: var(--color-surface-2);
+}
+
+body.site-body .nav-toggle-bar {
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-text);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+body.site-body .nav-toggle.is-open .nav-toggle-bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+body.site-body .nav-toggle.is-open .nav-toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+body.site-body .nav-toggle.is-open .nav-toggle-bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
 /* ==========================================================================
    Hero
    ========================================================================== */
@@ -356,6 +527,33 @@ input, select, textarea {
   padding: 60px 0;
 }
 
+body.site-body .landing-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(91, 124, 250, 0.22), transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(168, 85, 247, 0.18), transparent 45%),
+    var(--color-bg);
+}
+
+body.site-body .landing-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(ellipse 60% 55% at 50% 35%, black 40%, transparent 85%);
+  pointer-events: none;
+}
+
+body.site-body .landing-hero-inner {
+  position: relative;
+  z-index: 1;
+  animation: site-fade-up 0.6s ease both;
+}
+
 .landing-hero-inner {
   text-align: center;
   max-width: 720px;
@@ -372,6 +570,28 @@ input, select, textarea {
   padding: 6px 14px;
   border-radius: 999px;
   margin-bottom: 20px;
+}
+
+body.site-body .landing-eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+body.site-body .landing-eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gradient-brand);
+  margin-right: 8px;
+  vertical-align: middle;
+  box-shadow: 0 0 8px rgba(91, 124, 250, 0.7);
 }
 
 .landing-hero h1 {
@@ -427,6 +647,54 @@ input, select, textarea {
   margin-bottom: 10px;
 }
 
+body.site-body .grade-choice-card {
+  position: relative;
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  overflow: hidden;
+  animation: site-fade-up 0.6s ease both;
+}
+
+body.site-body .grade-choice-card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+body.site-body .grade-choice-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--gradient-brand);
+  opacity: 0;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+body.site-body .grade-choice-card:hover {
+  background: var(--color-surface);
+  border-color: transparent;
+  box-shadow: var(--glow-blue);
+  transform: translateY(-4px);
+}
+
+body.site-body .grade-choice-card:hover::before {
+  opacity: 1;
+}
+
+body.site-body .grade-choice-number {
+  background: var(--gradient-brand);
+  box-shadow: 0 8px 24px -6px rgba(91, 124, 250, 0.6);
+  transition: transform 0.25s ease;
+}
+
+body.site-body .grade-choice-card:hover .grade-choice-number {
+  transform: scale(1.06);
+}
+
 .grade-choice-label {
   font-size: 20px;
   font-weight: 800;
@@ -473,6 +741,20 @@ input, select, textarea {
   font-size: 22px;
   font-weight: 800;
   margin-bottom: 14px;
+}
+
+body.site-body .grade-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% -10%, rgba(91, 124, 250, 0.16), transparent 50%),
+    radial-gradient(circle at 100% 120%, rgba(168, 85, 247, 0.14), transparent 50%),
+    var(--color-surface);
+}
+
+body.site-body .grade-hero-badge {
+  background: var(--gradient-brand);
+  box-shadow: 0 8px 24px -6px rgba(91, 124, 250, 0.55);
 }
 
 .grade-hero h1 {
@@ -621,6 +903,16 @@ input, select, textarea {
   box-shadow: var(--shadow-sm);
 }
 
+body.site-body .card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.site-body a.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
 .subject-card {
   display: flex;
   flex-direction: column;
@@ -636,6 +928,26 @@ input, select, textarea {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+body.site-body .subject-card {
+  position: relative;
+}
+
+body.site-body .subject-card .subject-icon {
+  background: var(--gradient-brand-soft);
+  color: var(--color-primary);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+body.site-body .subject-card:hover .subject-icon {
+  background: var(--gradient-brand);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+body.site-body .subject-card:hover {
+  box-shadow: var(--glow-blue);
 }
 
 .subject-card .subject-icon svg {
@@ -696,6 +1008,20 @@ input, select, textarea {
   border-top: 1px solid var(--color-border);
 }
 
+body.site-body .paper-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.site-body .paper-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--glow-purple);
+}
+
+body.site-body .paper-card .badge-muted {
+  font-variant-numeric: tabular-nums;
+}
+
 .resource-card h3 {
   font-size: 15px;
   font-weight: 700;
@@ -744,6 +1070,19 @@ input, select, textarea {
   margin-bottom: 24px;
 }
 
+body.site-body .filter-bar {
+  border-color: var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+body.site-body .filter-field select:focus,
+body.site-body .filter-form select:focus,
+body.site-body .filter-search:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
 .filter-field {
   display: flex;
   flex-direction: column;
@@ -790,6 +1129,26 @@ input, select, textarea {
   height: 40px;
 }
 
+body.site-body .empty-icon,
+body.site-body .site-empty-state .empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--gradient-brand-soft);
+  color: var(--color-primary);
+}
+
+body.site-body .resource-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.site-body .resource-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--glow-blue);
+}
+
 /* ==========================================================================
    Page Header (inner pages)
    ========================================================================== */
@@ -820,6 +1179,32 @@ input, select, textarea {
   color: #c7c9d3;
   padding: 40px 0 20px;
   margin-top: 40px;
+}
+
+body.site-body .site-footer {
+  position: relative;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+body.site-body .site-footer::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gradient-brand);
+  opacity: 0.5;
+}
+
+body.site-body .footer-grid ul li a {
+  color: #9296a6;
+  transition: color 0.15s ease;
+}
+
+body.site-body .footer-grid ul li a:hover {
+  color: var(--color-primary);
 }
 
 .footer-grid {
@@ -941,6 +1326,9 @@ input, select, textarea {
   .nav-toggle {
     display: block;
   }
+  body.site-body .nav-toggle {
+    display: flex;
+  }
   .hero h1 {
     font-size: 26px;
   }
@@ -961,6 +1349,43 @@ input, select, textarea {
   }
   .hero-stats {
     gap: 24px;
+  }
+  body.site-body .main-nav {
+    background: rgba(18, 18, 32, 0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  body.site-body .main-nav a {
+    border-radius: var(--radius-sm);
+  }
+  body.site-body .grade-hero,
+  body.site-body .page-header {
+    padding: 28px 0;
+  }
+  body.site-body .grade-choice-card {
+    padding: 28px 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  body.site-body .card-grid {
+    gap: 14px;
+  }
+  body.site-body .material-card {
+    flex-direction: column;
+  }
+  body.site-body .material-card-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+  body.site-body .material-card-actions .btn {
+    flex: 1;
+    text-align: center;
+  }
+  body.site-body .contact-card,
+  body.site-body .subject-card,
+  body.site-body .paper-card {
+    padding: 16px;
   }
 }
 
@@ -1010,6 +1435,29 @@ input, select, textarea {
   margin-top: 2px;
   color: var(--color-primary);
   display: flex;
+}
+
+body.site-body .material-card {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body.site-body .material-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--glow-blue);
+}
+
+body.site-body .material-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--gradient-brand-soft);
+  align-items: center;
+  justify-content: center;
+}
+
+body.site-body .material-card-meta span {
+  font-variant-numeric: tabular-nums;
 }
 .material-card-icon svg { width: 24px; height: 24px; }
 .material-card-body { flex: 1; min-width: 0; }
