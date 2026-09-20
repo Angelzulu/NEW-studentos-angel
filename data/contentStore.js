@@ -36,13 +36,12 @@ const ANNOUNCE_FILE  = path.join(DATA_DIR, "announcements.json");
 
 // ── Low-level helpers ───────────────────────────────────────────────────────
 function readJSON(filePath, memKey) {
-  if (!IS_WRITABLE) return _mem[memKey];
   try {
-    if (!fs.existsSync(filePath)) return [];
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
-    return [];
-  }
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    }
+  } catch { /* fall through to in-memory fallback */ }
+  return _mem[memKey];
 }
 
 function writeJSON(filePath, memKey, data) {
