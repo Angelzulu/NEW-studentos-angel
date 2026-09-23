@@ -27,12 +27,15 @@ function titleCase(str) {
     .join(" ");
 }
 
-// A material was uploaded to R2 if it has an r2Key. Its stored filePath may
-// be a broken link (built from the misconfigured R2_PUBLIC_URL), so for these
-// we always stream the object ourselves instead of trusting/redirecting to
-// filePath.
+// A material was uploaded to R2 if it has an r2Key. Its stored filePath is
+// always a broken link (built from the misconfigured R2_PUBLIC_URL — the
+// Cloudflare dashboard URL, not an actual public object URL), so for any
+// material with an r2Key we always route through /raw (our authenticated
+// streaming proxy) regardless of whether R2 is configured in this process.
+// Not checking R2_CONFIGURED here ensures we never fall back to the broken
+// filePath — /raw will return a proper 503 if R2 env vars are missing.
 function isR2Material(material) {
-  return !!(material && material.r2Key && R2_CONFIGURED);
+  return !!(material && material.r2Key);
 }
 
 // ── Home ─────────────────────────────────────────────────────────────────────
@@ -212,8 +215,16 @@ router.get("/materials/:id/raw", async (req, res) => {
   const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
 
-  if (!isR2Material(material)) {
+  // Material exists on disk (no r2Key) — caller should use the filePath directly.
+  if (!material.r2Key) {
     return res.status(404).render("404", { title: "File Not Found" });
+  }
+
+  // R2 credentials missing in this environment — give a clear service error
+  // rather than a misleading 404 so the operator knows what is wrong.
+  if (!R2_CONFIGURED) {
+    console.error(`[/raw] R2 not configured — cannot stream key: ${material.r2Key}`);
+    return res.status(503).render("404", { title: "Storage Not Available" });
   }
 
   try {
@@ -239,7 +250,16 @@ router.get("/materials/:id/download", async (req, res) => {
 
   matStore.incrementDownloads(req.params.id);
 
-  if (isR2Material(material)) {
+  // R2-backed material (has an r2Key, regardless of R2_CONFIGURED).
+  if (material.r2Key) {
+    // If R2 credentials are missing, surface a clear error instead of
+    // falling through to the local-disk path — filePath is the broken
+    // dashboard URL, so the disk lookup always 404s for these files.
+    if (!R2_CONFIGURED) {
+      console.error(`[/download] R2 not configured — cannot stream key: ${material.r2Key}`);
+      return res.status(503).render("404", { title: "Storage Not Available" });
+    }
+
     try {
       return await streamR2Object(material.r2Key, res, {
         filename: material.fileName || path.basename(material.filePath || "document.pdf"),
@@ -254,7 +274,7 @@ router.get("/materials/:id/download", async (req, res) => {
     }
   }
 
-  // Local disk path
+  // Local disk path (materials uploaded without R2 configured).
   const absPath = path.join(__dirname, "..", material.filePath);
   if (!fs.existsSync(absPath)) {
     return res.status(404).render("404", { title: "File Not Found" });

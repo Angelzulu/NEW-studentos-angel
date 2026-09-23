@@ -299,27 +299,12 @@ router.post("/content/material/quick", requireOwner, function (req, res, next) {
   }
 });
 
-// ── POST: Delete a material ──────────────────────────────────────────────────
-router.post("/content/material/:id/delete", requireOwner, async (req, res) => {
-  const item = matStore.remove(req.params.id);
-  if (item) {
-    if (item.r2Key && R2_CONFIGURED) {
-      // Delete from R2
-      try {
-        await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: item.r2Key }));
-      } catch (e) {
-        console.error("R2 delete error:", e);
-      }
-    } else if (item.filePath && !item.filePath.startsWith("http")) {
-      // Delete from local disk
-      const absPath = path.join(__dirname, "..", item.filePath);
-      try { if (fs.existsSync(absPath)) fs.unlinkSync(absPath); } catch {}
-    }
-  }
-  res.redirect("/admin/content?tab=materials&flash=success&flashMsg=Material+deleted.");
-});
-
 // ── POST: Bulk-delete materials ───────────────────────────────────────────────
+// IMPORTANT: this literal-path route MUST be registered BEFORE
+// /content/material/:id/delete (the wildcard route below).  Express matches
+// routes in registration order, so if the wildcard comes first it captures
+// "bulk-delete" as the :id segment and this handler is never reached.
+//
 // Expects JSON body: { ids: [1, 2, 3] }
 // Returns JSON: { deleted: [...], failed: [...] }
 router.post("/content/material/bulk-delete", requireOwner, express.json(), async (req, res) => {
@@ -369,6 +354,26 @@ router.post("/content/material/bulk-delete", requireOwner, express.json(), async
   }
 
   return res.json({ ok: true, deleted, failed });
+});
+
+// ── POST: Delete a material ──────────────────────────────────────────────────
+router.post("/content/material/:id/delete", requireOwner, async (req, res) => {
+  const item = matStore.remove(req.params.id);
+  if (item) {
+    if (item.r2Key && R2_CONFIGURED) {
+      // Delete from R2
+      try {
+        await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: item.r2Key }));
+      } catch (e) {
+        console.error("R2 delete error:", e);
+      }
+    } else if (item.filePath && !item.filePath.startsWith("http")) {
+      // Delete from local disk
+      const absPath = path.join(__dirname, "..", item.filePath);
+      try { if (fs.existsSync(absPath)) fs.unlinkSync(absPath); } catch {}
+    }
+  }
+  res.redirect("/admin/content?tab=materials&flash=success&flashMsg=Material+deleted.");
 });
 
 // ── POST: Toggle publish status of a material ────────────────────────────────
