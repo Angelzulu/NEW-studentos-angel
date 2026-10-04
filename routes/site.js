@@ -187,12 +187,8 @@ router.get("/materials/:id/view", (req, res) => {
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
   matStore.incrementViews(req.params.id);
 
-  // R2-backed files: embed our own streaming proxy (works regardless of
-  // R2_PUBLIC_URL/bucket public-access config). Local files: keep serving
-  // straight from /storage as before.
-  const viewUrl = isR2Material(material)
-    ? `/materials/${material.id}/raw`
-    : material.filePath;
+  // PDFs are served from public/materials/<id>.pdf via /raw (R2 no longer used for viewing).
+  const viewUrl = `/materials/${material.id}/raw`;
 
   const tags = [material.subject, material.grade].filter(Boolean).join(" ");
   res.render("pdf-viewer", {
@@ -208,37 +204,20 @@ router.get("/materials/:id/view", (req, res) => {
   });
 });
 
-// ── PDF Raw stream (R2-backed files only) ─────────────────────────────────────
-// Streams the object straight from R2 using our authenticated client, so the
-// browser <iframe> always gets the actual PDF bytes instead of a broken link.
-router.get("/materials/:id/raw", async (req, res) => {
+// ── PDF Raw stream (local storage) ────────────────────────────────────────────
+// Serves public/materials/<material id>.pdf (e.g. material id 7 -> 7.pdf).
+router.get("/materials/:id/raw", (req, res) => {
   const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
 
-  // Material exists on disk (no r2Key) — caller should use the filePath directly.
-  if (!material.r2Key) {
+  const absPath = path.join(__dirname, "..", "public", "materials", `${material.id}.pdf`);
+  if (!fs.existsSync(absPath)) {
+    console.error(`[/raw] Missing local PDF: ${absPath}`);
     return res.status(404).render("404", { title: "File Not Found" });
   }
-
-  // R2 credentials missing in this environment — give a clear service error
-  // rather than a misleading 404 so the operator knows what is wrong.
-  if (!R2_CONFIGURED) {
-    console.error(`[/raw] R2 not configured — cannot stream key: ${material.r2Key}`);
-    return res.status(503).render("404", { title: "Storage Not Available" });
-  }
-
-  try {
-    await streamR2Object(material.r2Key, res, {
-      filename: material.fileName || "document.pdf",
-      disposition: "inline",
-    });
-  } catch (e) {
-    const status = e.statusCode === 404 ? 404 : 502;
-    console.error(`R2 stream error (view) [${status}]:`, e.message);
-    res.status(status).render("404", {
-      title: status === 404 ? "File Not Found" : "Storage Error",
-    });
-  }
+  res.type("application/pdf");
+  res.setHeader("Content-Disposition", `inline; filename="${(material.fileName || "document.pdf").replace(/"/g, "")}"`);
+  res.sendFile(absPath);
 });
 
 // ── PDF Download ──────────────────────────────────────────────────────────────
