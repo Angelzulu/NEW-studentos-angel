@@ -1,0 +1,61 @@
+{
+  "name": "Student OS Zambia",
+  "short_name": "Student OS",
+  "description": "Free Grade 7 & Grade 12 past papers, notes & study resources for Zambian students",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#1a1a1a",
+  "background_color": "#ffffff",
+  "categories": ["education", "productivity"],
+  "screenshots": [],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 24x24 32x32",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "View Past Papers",
+      "short_name": "Past Papers",
+      "description": "Browse all past papers by grade and subject",
+      "url": "/papers",
+      "icons": [
+        {
+          "src": "/favicon.png",
+          "sizes": "64x64",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Browse Materials",
+      "short_name": "Materials",
+      "description": "Browse all learning materials and resources",
+      "url": "/materials",
+      "icons": [
+        {
+          "src": "/favicon.png",
+          "sizes": "64x64",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
