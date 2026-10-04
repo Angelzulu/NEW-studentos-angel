@@ -382,6 +382,25 @@ router.get("/announcements", (req, res) => {
 // subjects/papers show up automatically. Intentionally excludes everything
 // under /admin (login, dashboard, etc.) — those are also blocked in
 // robots.txt and never worth showing to Google.
+// Escapes the five XML special characters. Subject names such as
+// "Design & Technology" would otherwise produce invalid XML in <loc>.
+function xmlEscape(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// Returns YYYY-MM-DD, or undefined if the date is missing/invalid
+// (new Date(bad).toISOString() throws a RangeError, which would 500 the sitemap).
+function safeLastmod(value) {
+  if (!value) return undefined;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);
+}
+
 router.get("/sitemap.xml", (req, res) => {
   const urls = [];
   const addUrl = (loc, opts = {}) => {
@@ -427,7 +446,7 @@ router.get("/sitemap.xml", (req, res) => {
     addUrl(`/materials/${m.id}/view`, {
       changefreq: "monthly",
       priority:   "0.6",
-      lastmod:    m.uploadDate ? new Date(m.uploadDate).toISOString().slice(0, 10) : undefined,
+      lastmod:    safeLastmod(m.uploadDate),
     });
   });
 
@@ -436,7 +455,7 @@ router.get("/sitemap.xml", (req, res) => {
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls.map(u =>
       `  <url>\n` +
-      `    <loc>${u.loc}</loc>\n` +
+      `    <loc>${xmlEscape(u.loc)}</loc>\n` +
       (u.lastmod    ? `    <lastmod>${u.lastmod}</lastmod>\n`       : "") +
       (u.changefreq ? `    <changefreq>${u.changefreq}</changefreq>\n` : "") +
       (u.priority   ? `    <priority>${u.priority}</priority>\n`    : "") +
@@ -444,7 +463,9 @@ router.get("/sitemap.xml", (req, res) => {
     ).join("") +
     `</urlset>\n`;
 
-  res.type("application/xml").send(xml);
+  res.set("Content-Type", "application/xml; charset=utf-8");
+  res.set("Cache-Control", "public, max-age=3600");
+  res.status(200).send(xml);
 });
 
 module.exports = router;
