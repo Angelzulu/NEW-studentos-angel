@@ -38,6 +38,13 @@ function isR2Material(material) {
   return !!(material && material.r2Key);
 }
 
+// Local PDF path from the material's saved code, or null if it has none.
+function localPdfPath(material) {
+  const code = material && material.pdfCode;
+  if (!code || !/^[a-z0-9_-]+$/i.test(code)) return null;
+  return path.join(__dirname, "..", "public", "materials", `${code}.pdf`);
+}
+
 // ── Home ─────────────────────────────────────────────────────────────────────
 router.get("/", (req, res) => {
   res.render("index", {
@@ -205,13 +212,13 @@ router.get("/materials/:id/view", (req, res) => {
 });
 
 // ── PDF Raw stream (local storage) ────────────────────────────────────────────
-// Serves public/materials/<material id>.pdf (e.g. material id 7 -> 7.pdf).
+// Serves public/materials/<material.pdfCode>.pdf (e.g. a7f3k9.pdf).
 router.get("/materials/:id/raw", (req, res) => {
   const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
 
-  const absPath = path.join(__dirname, "..", "public", "materials", `${material.id}.pdf`);
-  if (!fs.existsSync(absPath)) {
+  const absPath = localPdfPath(material);
+  if (!absPath || !fs.existsSync(absPath)) {
     console.error(`[/raw] Missing local PDF: ${absPath}`);
     return res.status(404).render("404", { title: "File Not Found" });
   }
@@ -228,6 +235,12 @@ router.get("/materials/:id/download", async (req, res) => {
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
 
   matStore.incrementDownloads(req.params.id);
+
+  // Local PDF saved under the material's code (preferred; R2 not used).
+  const localPath = localPdfPath(material);
+  if (localPath && fs.existsSync(localPath)) {
+    return res.download(localPath, material.fileName || path.basename(localPath));
+  }
 
   // R2-backed material (has an r2Key, regardless of R2_CONFIGURED).
   if (material.r2Key) {

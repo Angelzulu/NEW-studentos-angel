@@ -135,7 +135,20 @@ async function storeFile(file, folder) {
       : `/tmp-files/${filename}`;
   }
 
-  return { filePath, r2Key };
+  // Local copy for viewing/download: public/materials/<unique code>.pdf
+  let pdfCode = null;
+  try {
+    const dir = path.join(__dirname, "..", "public", "materials");
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    do { pdfCode = Math.random().toString(36).slice(2, 8); }
+    while (pdfCode.length < 6 || fs.existsSync(path.join(dir, pdfCode + ".pdf")));
+    fs.writeFileSync(path.join(dir, pdfCode + ".pdf"), file.buffer);
+  } catch (e) {
+    console.error("Local PDF save error:", e);
+    pdfCode = null;
+  }
+
+  return { filePath, r2Key, pdfCode };
 }
 
 // ── Dashboard ────────────────────────────────────────────────────────────────
@@ -227,7 +240,7 @@ router.post("/content/material", requireOwner, upload.single("pdfFile"), async (
     }
 
     const folder = typeToFolder(materialType);
-    const { filePath, r2Key } = await storeFile(req.file, folder);
+    const { filePath, r2Key, pdfCode } = await storeFile(req.file, folder);
 
     matStore.add({
       title,
@@ -242,6 +255,7 @@ router.post("/content/material", requireOwner, upload.single("pdfFile"), async (
       fileSize:     formatBytes(req.file.size),
       filePath,
       r2Key,
+      pdfCode,
     });
 
     res.redirect("/admin/content?tab=materials&flash=success&flashMsg=Material+uploaded+successfully.");
@@ -275,7 +289,7 @@ router.post("/content/material/quick", requireOwner, function (req, res, next) {
     const materialType = "Past Paper";
     const title  = titleFromFilename(req.file.originalname);
     const folder = typeToFolder(materialType);
-    const { filePath, r2Key } = await storeFile(req.file, folder);
+    const { filePath, r2Key, pdfCode } = await storeFile(req.file, folder);
 
     const item = matStore.add({
       title,
@@ -290,6 +304,7 @@ router.post("/content/material/quick", requireOwner, function (req, res, next) {
       fileSize:     formatBytes(req.file.size),
       filePath,
       r2Key,
+      pdfCode,
     });
 
     res.json({ success: true, id: item.id, title: item.title, grade: item.grade, subject: item.subject });

@@ -134,6 +134,7 @@ const materials = {
       fileSize:     fields.fileSize     || "",
       filePath:     fields.filePath     || "",
       r2Key:        fields.r2Key        || null,  // R2 object key for deletion
+      pdfCode:      fields.pdfCode      || null,  // local file code: public/materials/<pdfCode>.pdf
       uploadDate:   nowISO(),
       published:    true,
       views:        0,
