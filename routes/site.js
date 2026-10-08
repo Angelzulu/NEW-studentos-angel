@@ -211,20 +211,52 @@ router.get("/materials/:id/view", (req, res) => {
   });
 });
 
-// ── PDF Raw stream (local storage) ────────────────────────────────────────────
-// Serves public/materials/<material.pdfCode>.pdf (e.g. a7f3k9.pdf).
-router.get("/materials/:id/raw", (req, res) => {
+// ── PDF Raw stream (local storage or Cloudflare R2) ────────────────────────────
+// Prefer a local copy, but fall back to R2 for files that are not on Render's
+// ephemeral filesystem. This prevents valid R2-backed materials returning 404.
+router.get("/materials/:id/raw", async (req, res) => {
   const material = matStore.findById(req.params.id);
   if (!material) return res.status(404).render("404", { title: "Page Not Found" });
 
+  const filename = (material.fileName || "document.pdf").replace(/"/g, "");
   const absPath = localPdfPath(material);
-  if (!absPath || !fs.existsSync(absPath)) {
-    console.error(`[/raw] Missing local PDF: ${absPath}`);
-    return res.status(404).render("404", { title: "File Not Found" });
+  if (absPath && fs.existsSync(absPath)) {
+    res.type("application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+    return res.sendFile(absPath);
   }
-  res.type("application/pdf");
-  res.setHeader("Content-Disposition", `inline; filename="${(material.fileName || "document.pdf").replace(/"/g, "")}"`);
-  res.sendFile(absPath);
+
+  if (material.r2Key) {
+    if (!R2_CONFIGURED) {
+      console.error("[/raw] R2-backed PDF cannot be streamed: R2 is not configured");
+      return res.status(503).render("404", { title: "Storage Not Available" });
+    }
+    try {
+      return await streamR2Object(material.r2Key, res, {
+        filename,
+        disposition: "inline",
+      });
+    } catch (err) {
+      console.error("[/raw] R2 stream failed:", err.message);
+      if (!res.headersSent) {
+        const missing = err.name === "NoSuchKey" || err.name === "NotFound" || err.$metadata?.httpStatusCode === 404;
+        return res.status(missing ? 404 : 502).render("404", {
+          title: missing ? "File Not Found" : "Storage Error",
+        });
+      }
+      return res.end();
+    }
+  }
+
+  // Legacy materials may still point to a valid local filePath.
+  if (material.filePath && fs.existsSync(material.filePath)) {
+    res.type("application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+    return res.sendFile(path.resolve(material.filePath));
+  }
+
+  console.error(`[/raw] Missing PDF for material ${req.params.id}`);
+  return res.status(404).render("404", { title: "File Not Found" });
 });
 
 // ── PDF Download ──────────────────────────────────────────────────────────────
