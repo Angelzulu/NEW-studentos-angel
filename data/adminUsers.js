@@ -27,7 +27,7 @@ if (!process.env.ADMIN_PASSWORD_HASH) {
 const ADMIN_USERS = [
   {
     id:           "1",
-    username:     "angelzm",
+    username:     "admin",
     passwordHash: process.env.ADMIN_PASSWORD_HASH || "",
     role:         "owner",   // owner | staff
     displayName:  "Angel",
