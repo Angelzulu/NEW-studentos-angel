@@ -146,6 +146,47 @@ app.use("/", siteRoutes);
 app.use("/admin", authRoutes);   // login / logout (unprotected)
 app.use("/admin", adminRoutes);  // all other admin routes (protected inside)
 
+// ── Emergency catalog route fallback ─────────────────────────────────────────
+// Keep these two public catalog pages reachable even if the site router fails to
+// match them for any reason. This reads the existing content store and does not
+// modify or delete any paper records.
+const catalogData = require("./data/sampleData");
+const { materials: catalogMaterials } = require("./data/contentStore");
+
+app.get("/materials", (req, res) => {
+  const { grade, subject, materialType, year, search } = req.query;
+  const filtered = catalogMaterials.filter({ grade, subject, materialType, year, search });
+  res.render("materials", {
+    title: "Learning Materials",
+    metaTitle: "Learning Materials Zambia — Past Papers, Notes & Study Guides | Student OS",
+    metaDescription: "Browse Grade 7, Grade 9 and Grade 12 learning materials in Zambia — past papers, notes, textbooks and revision guides for Mathematics, English and other subjects.",
+    canonicalUrl: `${SITE_URL}/materials`,
+    materials: filtered,
+    grades: catalogData.grades,
+    subjects: catalogData.subjects,
+    materialTypes: ["Past Paper", "Marking Scheme", "Notes", "Study Guide", "Revision", "Textbook", "Exam Paper", "Other"],
+    years: catalogData.years,
+    filters: { grade, subject, materialType, year, search },
+  });
+});
+
+app.get("/papers", (req, res) => {
+  const { grade, subject, year } = req.query;
+  const filtered = catalogMaterials.filter({ grade, subject, year, materialType: "Past Paper" });
+  res.render("materials", {
+    title: "Past Papers",
+    metaTitle: "Zambia Past Papers — Grade 7, Grade 9 & Grade 12 | Student OS",
+    metaDescription: "Free Zambia past examination papers for Grade 7, Grade 9 and Grade 12 — Mathematics, English, Science and other subjects, updated regularly.",
+    canonicalUrl: `${SITE_URL}/papers`,
+    materials: filtered,
+    grades: catalogData.grades,
+    subjects: catalogData.subjects,
+    materialTypes: ["Past Paper"],
+    years: catalogData.years,
+    filters: { grade, subject, year, materialType: "Past Paper" },
+  });
+});
+
 // ── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).render("404", {
