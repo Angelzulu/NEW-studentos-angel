@@ -5,6 +5,7 @@
  */
 
 const express   = require("express");
+const crypto    = require("crypto");
 const router    = express.Router();
 const bcrypt    = require("bcryptjs");
 const rateLimit = require("express-rate-limit");
@@ -32,14 +33,40 @@ router.get("/login", (req, res) => {
     });
     return;
   }
+  // Issue a one-time token for this login form. A submitted form can only be
+  // processed once, so pressing Enter twice cannot submit a stale form again.
+  req.session.loginFormToken = crypto.randomBytes(32).toString("hex");
   const error   = req.flash("loginError")[0]   || null;
   const success = req.flash("loginSuccess")[0] || null;
-  res.render("admin/login", { title: "Admin Login", error, success });
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  req.session.save(() => {
+    res.render("admin/login", {
+      title: "Admin Login",
+      error,
+      success,
+      loginFormToken: req.session.loginFormToken,
+    });
+  });
 });
 
 // ── POST /admin/login ────────────────────────────────────────────────────────
 router.post("/login", loginLimiter, async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, loginFormToken } = req.body;
+
+  // Reject duplicate/replayed submissions. This is especially important when
+  // a user presses Enter twice: the second request must not be able to create
+  // a new authenticated session from an old form submission.
+  const expectedToken = req.session && req.session.loginFormToken;
+  if (!expectedToken || !loginFormToken || !crypto.timingSafeEqual(
+    Buffer.from(String(expectedToken)),
+    Buffer.from(String(loginFormToken))
+  )) {
+    req.flash("loginError", "This login form has expired. Please try again.");
+    return res.redirect("/admin/login");
+  }
+  delete req.session.loginFormToken;
 
   // A login attempt must always authenticate again. Do not let an existing
   // admin session turn an incorrect password into a successful login.
