@@ -59,10 +59,14 @@ router.post("/login", loginLimiter, async (req, res) => {
   // a user presses Enter twice: the second request must not be able to create
   // a new authenticated session from an old form submission.
   const expectedToken = req.session && req.session.loginFormToken;
-  if (!expectedToken || !loginFormToken || !crypto.timingSafeEqual(
-    Buffer.from(String(expectedToken)),
-    Buffer.from(String(loginFormToken))
-  )) {
+  const expectedBuf = expectedToken ? Buffer.from(String(expectedToken)) : Buffer.alloc(0);
+  const suppliedBuf = loginFormToken ? Buffer.from(String(loginFormToken)) : Buffer.alloc(0);
+  const tokenMatches =
+    expectedBuf.length === suppliedBuf.length &&
+    expectedBuf.length > 0 &&
+    crypto.timingSafeEqual(expectedBuf, suppliedBuf);
+
+  if (!tokenMatches) {
     req.flash("loginError", "This login form has expired. Please try again.");
     return res.redirect("/admin/login");
   }
