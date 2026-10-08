@@ -6,21 +6,56 @@
  * requireOwner  — blocks staff accounts from owner-only actions (403)
  */
 
+// Never allow a browser, proxy, or back/forward cache to replay an admin page.
+// Authentication is checked on every request on the server.
+function noStore(res) {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+}
+
 function requireLogin(req, res, next) {
-  if (req.session && req.session.adminUser) {
-    // Attach user to res.locals so every EJS view can use it
-    res.locals.adminUser = req.session.adminUser;
+  noStore(res);
+
+  const user = req.session && req.session.adminUser;
+
+  // Only a complete, server-created identity counts as authenticated.
+  if (
+    user &&
+    typeof user === "object" &&
+    typeof user.id === "string" &&
+    typeof user.username === "string" &&
+    (user.role === "owner" || user.role === "staff")
+  ) {
+    res.locals.adminUser = user;
     return next();
   }
-  // Remember where the user was trying to go
-  req.session.returnTo = req.originalUrl;
-  res.redirect("/admin/login");
+
+  // Remove any malformed/stale identity so it cannot be reused.
+  if (req.session && req.session.adminUser) {
+    req.session.adminUser = null;
+  }
+
+  if (req.session) {
+    req.session.returnTo = req.originalUrl;
+    return req.session.save(() => res.redirect("/admin/login"));
+  }
+
+  return res.redirect("/admin/login");
 }
 
 function requireOwner(req, res, next) {
-  if (req.session && req.session.adminUser && req.session.adminUser.role === "owner") {
+  noStore(res);
+
+  if (
+    req.session &&
+    req.session.adminUser &&
+    typeof req.session.adminUser === "object" &&
+    req.session.adminUser.role === "owner"
+  ) {
     return next();
   }
+
   res.status(403).render("admin/403", {
     title:     "Access Denied",
     activeNav: "",
