@@ -35,6 +35,13 @@ router.get("/login", (req, res) => {
 router.post("/login", loginLimiter, async (req, res) => {
   const { username, password } = req.body;
 
+  // A login attempt must always authenticate again. Do not let an existing
+  // admin session turn an incorrect password into a successful login.
+  if (req.session && req.session.adminUser) {
+    await new Promise(resolve => req.session.destroy(() => resolve()));
+    res.clearCookie("studentos.sid");
+  }
+
   if (!username || !password) {
     req.flash("loginError", "Username and password are required.");
     return res.redirect("/admin/login");
