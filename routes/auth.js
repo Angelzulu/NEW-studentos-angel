@@ -23,8 +23,14 @@ const loginLimiter = rateLimit({
 
 // ── GET /admin/login ─────────────────────────────────────────────────────────
 router.get("/login", (req, res) => {
+  // Never let an existing session bypass the login screen. Visiting the login
+  // page is treated as a fresh authentication boundary.
   if (req.session && req.session.adminUser) {
-    return res.redirect("/admin");
+    req.session.destroy(() => {
+      res.clearCookie("studentos.sid");
+      res.redirect("/admin/login");
+    });
+    return;
   }
   const error   = req.flash("loginError")[0]   || null;
   const success = req.flash("loginSuccess")[0] || null;
@@ -43,8 +49,10 @@ router.post("/login", loginLimiter, async (req, res) => {
   }
 
   if (!username || !password) {
+    // Explicitly remove any authenticated identity before returning an error.
+    req.session.adminUser = null;
     req.flash("loginError", "Username and password are required.");
-    return res.redirect("/admin/login");
+    return req.session.save(() => res.redirect("/admin/login"));
   }
 
   const normalizedUsername = String(username).trim().slice(0, 100);
@@ -65,8 +73,12 @@ router.post("/login", loginLimiter, async (req, res) => {
       userAgent: req.get("user-agent"),
     }).catch(err => console.error("[security-alert] Could not send failed-login email:", err.message));
 
+    // A failed authentication must leave the session unauthenticated. Save
+    // that state before redirecting so a second Enter/submit cannot reuse a
+    // stale authenticated session.
+    req.session.adminUser = null;
     req.flash("loginError", "Invalid username or password.");
-    return res.redirect("/admin/login");
+    return req.session.save(() => res.redirect("/admin/login"));
   }
 
   // Regenerate session to prevent session-fixation.
